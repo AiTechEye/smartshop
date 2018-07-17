@@ -92,8 +92,13 @@ smartshop.receive_fields=function(player,pressed)
 					if type==1 and inv:contains_item("main", stack)==false then minetest.chat_send_player(pname, "Error: The owners stock is end.") return end
 					if not pinv:contains_item("main", pay) then minetest.chat_send_player(pname, "Error: You dont have enough in your inventory to buy this, exchange aborted.") return end
 					if not pinv:room_for_item("main", stack) then minetest.chat_send_player(pname, "Error: Your inventory is full, exchange aborted.") return end
-					pinv:remove_item("main", pay)
-					pinv:add_item("main", stack)
+					local item = pinv:remove_item("main", pay)
+					if item:get_count() == 1 and item:get_wear() > 0 then
+						pinv:add_item("main", item)
+						return
+					else
+						pinv:add_item("main", stack)
+					end
 					if type==1 then 
 						inv:remove_item("main", stack)
 						inv:add_item("main", pay)
@@ -358,7 +363,8 @@ on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 	end,
 allow_metadata_inventory_put = function(pos, listname, index, stack, player)
 		if minetest.get_meta(pos):get_string("owner")==player:get_player_name() or minetest.check_player_privs(player:get_player_name(), {protection_bypass=true}) then
-		return stack:get_count()
+			if stack:get_count() == 1 and stack:get_wear() > 0 then return 0 end
+			return stack:get_count()
 		end
 		return 0
 	end,
