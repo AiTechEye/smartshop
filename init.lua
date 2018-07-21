@@ -154,16 +154,16 @@ smartshop.receive_fields=function(player,pressed)
 					if nstack.stack then
 						pinv:add_item("main",nstack.stack)
 						if type==1 then inv:remove_item(nstack.take, stack,nstack.n) end
-					elseif type==1 and nstack.item then
+					elseif nstack.item then
 						pinv:add_item("main",nstack.item)
 						if type==1 then inv:remove_item(nstack.take, stack) end
-					elseif type==1 then
+					else
 						minetest.chat_send_player(pname, "Unknown Error")
 						return
 					end
 
 					pinv:remove_item("main", pay)
-					inv:add_item("main", pay)
+					if type==1 then inv:add_item("main", pay) end
 
 					if mesecon then
 						mesecon.receptor_on(pos)
@@ -350,7 +350,7 @@ smartshop.showform=function(pos,player,re)
 		.."list[nodemeta:" .. spos .. ";pay4;5,1;1,1;]"
 		if creative==1 then
 			gui=gui .."label[0.5,-0.4;Your stock is unlimeted becaouse you have creative or give]"
-			.."button[6,1;2.2,1;tooglelime;Toogle lime]"
+			.."button[6,1;2.2,1;tooglelime;Toogle limit]"
 		end
 		gui=gui
 		.."list[nodemeta:" .. spos .. ";main;0,2;8,4;]"
