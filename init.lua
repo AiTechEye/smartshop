@@ -40,12 +40,20 @@ smartshop.get_offer=function(pos)
 	return offer
 end
 
+smartshop.not_pos=function(pos)
+	if not (pos and pos.x and pos.y and pos.z) then
+		return true
+	end
+end
+
+
 
 smartshop.receive_fields=function(player,pressed)
 		if pressed.customer then
 			return smartshop.showform(smartshop.user[player:get_player_name()],player,true)
 		elseif pressed.sellall then
 			local pos=smartshop.user[player:get_player_name()]
+			if smartshop.not_pos(pos) then return end
 			local meta=minetest.get_meta(pos)
 			local pname=player:get_player_name()
 			if meta:get_int("sellall")==0 then
@@ -57,6 +65,7 @@ smartshop.receive_fields=function(player,pressed)
 			end
 		elseif pressed.tooglelime then
 			local pos=smartshop.user[player:get_player_name()]
+			if smartshop.not_pos(pos) then return end
 			local meta=minetest.get_meta(pos)
 			local pname=player:get_player_name()
 			if meta:get_int("type")==0 then
@@ -73,6 +82,7 @@ smartshop.receive_fields=function(player,pressed)
 				if pressed["buy" .. i] then break end
 			end
 			local pos=smartshop.user[player:get_player_name()]
+			if smartshop.not_pos(pos) then return end
 			local meta=minetest.get_meta(pos)
 			local type=meta:get_int("type")
 			local sellall=meta:get_int("sellall")
@@ -163,6 +173,7 @@ smartshop.receive_fields=function(player,pressed)
 			end
 		else
 			local pos=smartshop.user[player:get_player_name()]
+			if smartshop.not_pos(pos) then return end
 			if pos and pos.x then
 				smartshop.update_info(pos)
 				if smartshop.user[player:get_player_name()] or minetest.check_player_privs(player:get_player_name(), {protection_bypass=true}) then
