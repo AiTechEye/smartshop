@@ -81,22 +81,83 @@ smartshop.receive_fields=function(player,pressed)
 			local pname=player:get_player_name()
 			if pressed["buy" .. n] then
 				local name=inv:get_stack("give" .. n,1):get_name()
-				local stack=name .." ".. inv:get_stack("give" .. n,1):get_count()
-				local pay=inv:get_stack("pay" .. n,1):get_name() .." ".. inv:get_stack("pay" .. n,1):get_count()
+				local gc=inv:get_stack("give" .. n,1):get_count()
+				local stack=name .." ".. gc
+				local pc=inv:get_stack("pay" .. n,1):get_count()
+				local pay=inv:get_stack("pay" .. n,1):get_name() .." ".. pc
 				if name~="" then
-					if type==1 and inv:room_for_item("main", pay)==false then minetest.chat_send_player(pname, "Error: The owners stock is full, cant receive, exchange aborted.") return end
-					if type==1 and sellall==1 and inv:contains_item("main", stack)==false and inv:contains_item("give" .. n, stack)==true then
-						inv:add_item("main", stack)
-						inv:remove_item("give" .. n, stack)
+					local pstack={}
+					local nstack={}
+
+--fast checks
+					if not pinv:room_for_item("main", stack) then
+						minetest.chat_send_player(pname, "Error: Your inventory is full, exchange aborted.")
+						return
+					elseif not pinv:contains_item("main", pay) then
+						minetest.chat_send_player(pname, "Error: You dont have enough in your inventory to buy this, exchange aborted.")
+						return
+					elseif type==1 and inv:room_for_item("main", pay)==false then
+						minetest.chat_send_player(pname, "Error: The owners stock is full, cant receive, exchange aborted.")
+						return
+					elseif type==1 then
+--if sells from stock only, or give line, 1 itemstack or multiply
+						if inv:contains_item("main", stack) then
+
+						elseif sellall==1 and inv:contains_item("give" .. n, stack) then
+							if gc==1 then
+								nstack={stack=inv:get_stack("give" .. n, 1),take="give" .. n,n=1}
+							else
+								nstack={item=stack,take="give" .. n}
+							end
+
+						else
+							minetest.chat_send_player(pname, "Error: The owners stock is end.")
+							return
+						end
 					end
-					if type==1 and inv:contains_item("main", stack)==false then minetest.chat_send_player(pname, "Error: The owners stock is end.") return end
-					if not pinv:contains_item("main", pay) then minetest.chat_send_player(pname, "Error: You dont have enough in your inventory to buy this, exchange aborted.") return end
-					if not pinv:room_for_item("main", stack) then minetest.chat_send_player(pname, "Error: Your inventory is full, exchange aborted.") return end
+--is in stock, 1 itemstack or multiply
+					if not nstack.take and gc==1 then
+						for i=1,32,1 do
+							if inv:get_stack("main", i):get_name()==inv:get_stack("give" .. n,1):get_name() then
+
+								if inv:get_stack("main", i):get_count()>1 then
+									nstack={item=stack,take="main"}
+								else
+									nstack={stack=inv:get_stack("main", i),take="main",n=i}
+								end
+								break
+							end
+						end
+					elseif not nstack.take then
+						nstack={item=stack,take="main"}
+					end
+--take from player, itemstack or multiply
+					if pc==1 then
+						for i=0,32,1 do
+							if pinv:get_stack("main", i):get_name()==inv:get_stack("pay" .. n,1):get_name() and pinv:get_stack("main",i):get_wear()>0 then
+								minetest.chat_send_player(pname, "Error: your item is used")
+								return
+							end
+						end
+					end
+
+					if nstack.stack then
+						pinv:add_item("main",nstack.stack)
+						if type==1 then inv:remove_item(nstack.take, stack,nstack.n) end
+					elseif type==1 and nstack.item then
+						pinv:add_item("main",nstack.item)
+						if type==1 then inv:remove_item(nstack.take, stack) end
+					elseif type==1 then
+						minetest.chat_send_player(pname, "Unknown Error")
+						return
+					end
+
 					pinv:remove_item("main", pay)
-					pinv:add_item("main", stack)
-					if type==1 then 
-						inv:remove_item("main", stack)
-						inv:add_item("main", pay)
+					inv:add_item("main", pay)
+
+					if mesecon then
+						mesecon.receptor_on(pos)
+						minetest.get_node_timer(pos):start(1)
 					end
 				end
 			end
@@ -308,13 +369,19 @@ end
 minetest.register_node("smartshop:shop", {
 	description = "Smartshop",
 	tiles = {"default_chest_top.png^[colorize:#ffffff77^default_obsidian_glass.png"},
-	groups = {choppy = 2, oddly_breakable_by_hand = 1,tubedevice = 1, tubedevice_receiver = 1},
+	groups = {choppy = 2, oddly_breakable_by_hand = 1,tubedevice = 1, tubedevice_receiver = 1,mesecon=2},
 	drawtype="nodebox",
 	node_box = {type="fixed",fixed={-0.5,-0.5,-0.0,0.5,0.5,0.5}},
 	paramtype2="facedir",
 	paramtype = "light",
 	sunlight_propagates = true,
 	light_source = 10,
+	on_timer = function (pos, elapsed)
+		if mesecon then
+			mesecon.receptor_off(pos)
+		end
+		return false
+	end,
 	tube = {insert_object = function(pos, node, stack, direction)
 			local meta = minetest.get_meta(pos)
 			local inv = meta:get_inventory()
@@ -357,7 +424,7 @@ on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		smartshop.showform(pos,player)
 	end,
 allow_metadata_inventory_put = function(pos, listname, index, stack, player)
-		if minetest.get_meta(pos):get_string("owner")==player:get_player_name() or minetest.check_player_privs(player:get_player_name(), {protection_bypass=true}) then
+		if stack:get_wear()==0 and (minetest.get_meta(pos):get_string("owner")==player:get_player_name() or minetest.check_player_privs(player:get_player_name(), {protection_bypass=true})) then
 		return stack:get_count()
 		end
 		return 0
