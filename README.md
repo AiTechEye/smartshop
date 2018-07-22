@@ -13,6 +13,6 @@ You can toogle it unlimited or limited if you have give or creative
 
 The "All" button will limit your stock to the inventory or and the giveline, its on as default.
 
-wifi storage, send to and refile from wifi storages
+wifi storage, send to and refill from wifi storages
 
 It also works with pipeworks, mesecon and aliveai
