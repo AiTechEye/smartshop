@@ -1,4 +1,7 @@
-smartshop={user={},tmp={},dir={{x=0,y=0,z=-1},{x=-1,y=0,z=0},{x=0,y=0,z=1},{x=1,y=0,z=0}},dpos={
+smartshop={user={},tmp={},add_storage={},max_wifi_distance=30,
+mesecon=minetest.get_modpath("mesecons")~=nil,
+dir={{x=0,y=0,z=-1},{x=-1,y=0,z=0},{x=0,y=0,z=1},{x=1,y=0,z=0}},
+dpos={
 {{x=0.2,y=0.2,z=0},{x=-0.2,y=0.2,z=0},{x=0.2,y=-0.2,z=0},{x=-0.2,y=-0.2,z=0}},
 {{x=0,y=0.2,z=0.2},{x=0,y=0.2,z=-0.2},{x=0,y=-0.2,z=0.2},{x=0,y=-0.2,z=-0.2}},
 {{x=-0.2,y=0.2,z=0},{x=0.2,y=0.2,z=0},{x=-0.2,y=-0.2,z=0},{x=0.2,y=-0.2,z=0}},
@@ -13,6 +16,43 @@ minetest.register_craft({
 		{"default:sign_wall_wood", "default:torch", "default:sign_wall_wood"},
 	}
 })
+
+minetest.register_craft({
+	output = "smartshop:wifistorage",
+	recipe = {
+		{"default:mese_crystal_fragment", "default:chest_locked", "default:mese_crystal_fragment"},
+		{"default:mese_crystal_fragment", "default:chest_locked", "default:mese_crystal_fragment"},
+		{"default:steel_ingot", "default:copper_ingot", "default:steel_ingot"},
+	}
+})
+
+smartshop.strpos=function(str,spl)
+	if str==nil then return "" end
+	if spl then
+		local c=","
+		if string.find(str," ") then c=" " end
+		local s=str.split(str,c)
+			if s[3]==nil then
+				return nil
+			else
+				local p={x=tonumber(s[1]),y=tonumber(s[2]),z=tonumber(s[3])}
+				if not (p and p.x and p.y and p.z) then return nil end
+				return p
+			end
+	else	if str and str.x and str.y and str.z then
+			return str.x .."," .. str.y .."," .. str.z
+		else
+			return nil
+		end
+	end
+end
+
+smartshop.send_mesecon=function(pos)
+	if smartshop.mesecon then
+		mesecon.receptor_on(pos)
+		minetest.get_node_timer(pos):start(1)
+	end
+end
 
 smartshop.use_offer=function(pos,player,n)
 	local pressed={}
@@ -41,9 +81,24 @@ smartshop.get_offer=function(pos)
 end
 
 smartshop.receive_fields=function(player,pressed)
-		local pos=smartshop.user[player:get_player_name()]
+		local pname=player:get_player_name()
+		local pos=smartshop.user[pname]
 		if not pos then
 			return
+		elseif pressed.tsend then
+			smartshop.add_storage[pname]={send=true,pos=pos}
+			minetest.after(30, function(pname)
+				smartshop.add_storage[pname]=nil
+			end, pname)
+			minetest.chat_send_player(pname, "Open a storage owned by you")
+		return
+		elseif pressed.trefill then
+			smartshop.add_storage[pname]={refill=true,pos=pos}
+			minetest.after(30, function(pname)
+				smartshop.add_storage[pname]=nil
+			end, pname)
+			minetest.chat_send_player(pname, "Open a storage owned by you")
+		return
 		elseif pressed.customer then
 			return smartshop.showform(pos,player,true)
 		elseif pressed.sellall then
@@ -80,14 +135,10 @@ smartshop.receive_fields=function(player,pressed)
 			local pname=player:get_player_name()
 			if pressed["buy" .. n] then
 				local name=inv:get_stack("give" .. n,1):get_name()
-				local gc=inv:get_stack("give" .. n,1):get_count()
-				local stack=name .." ".. gc
-				local pc=inv:get_stack("pay" .. n,1):get_count()
-				local pay=inv:get_stack("pay" .. n,1):get_name() .." ".. pc
+				local stack=name .." ".. inv:get_stack("give" .. n,1):get_count()
+				local pay=inv:get_stack("pay" .. n,1):get_name() .." ".. inv:get_stack("pay" .. n,1):get_count()
+				local stack_to_use="main"
 				if name~="" then
-					local pstack={}
-					local nstack={}
-
 --fast checks
 					if not pinv:room_for_item("main", stack) then
 						minetest.chat_send_player(pname, "Error: Your inventory is full, exchange aborted.")
@@ -97,68 +148,57 @@ smartshop.receive_fields=function(player,pressed)
 						return
 					elseif type==1 and inv:room_for_item("main", pay)==false then
 						minetest.chat_send_player(pname, "Error: The owners stock is full, cant receive, exchange aborted.")
-						return
-					elseif type==1 then
---if sells from stock only, or give line, 1 itemstack or multiply
+						--return
+					else
 						if inv:contains_item("main", stack) then
-
 						elseif sellall==1 and inv:contains_item("give" .. n, stack) then
-							if gc==1 then
-								nstack={stack=inv:get_stack("give" .. n, 1),take="give" .. n,n=1}
-								smartshop.update_info(pos)
-							else
-								nstack={item=stack,take="give" .. n}
-							end
-
+							stack_to_use="give" .. n
 						else
 							minetest.chat_send_player(pname, "Error: The owners stock is end.")
 							return
 						end
-					end
---is in stock, 1 itemstack or multiply
-					if not nstack.take and gc==1 then
-						for i=1,32,1 do
-							if inv:get_stack("main", i):get_name()==inv:get_stack("give" .. n,1):get_name() then
-
-								if inv:get_stack("main", i):get_count()>1 then
-									nstack={item=stack,take="main"}
-								else
-									nstack={stack=inv:get_stack("main", i),take="main",n=i}
-								end
-								break
-							end
-						end
-					elseif not nstack.take then
-						nstack={item=stack,take="main"}
-					end
---take from player, itemstack or multiply
-					if pc==1 then
 						for i=0,32,1 do
 							if pinv:get_stack("main", i):get_name()==inv:get_stack("pay" .. n,1):get_name() and pinv:get_stack("main",i):get_wear()>0 then
 								minetest.chat_send_player(pname, "Error: your item is used")
 								return
 							end
 						end
+						local rastack=inv:remove_item(stack_to_use, stack)
+						pinv:remove_item("main", pay)
+						pinv:add_item("main",rastack)
+						if type==1 then inv:add_item("main",pay) end
+						if type==0 then inv:add_item("main", rastack) end
 					end
-
-					if nstack.stack then
-						pinv:add_item("main",nstack.stack)
-						if type==1 then inv:remove_item(nstack.take, stack,nstack.n) end
-					elseif nstack.item then
-						pinv:add_item("main",nstack.item)
-						if type==1 then inv:remove_item(nstack.take, stack) end
-					else
-						minetest.chat_send_player(pname, "Unknown Error")
-						return
+-- send to / refill from wifi storage
+					if type==1 then
+						local tsend=smartshop.strpos(meta:get_string("item_send"),1)
+						local trefill=smartshop.strpos(meta:get_string("item_refill"),1)
+						if tsend then
+							local m=minetest.get_meta(tsend)
+							local inv2=m:get_inventory()
+							local mes=m:get_int("mesein")
+							if inv2:room_for_item("main", pay) then
+								inv2:add_item("main",pay)
+								inv:remove_item("main", pay)
+								if mes==1 or mes==3 then
+									smartshop.send_mesecon(tsend)
+								end
+							end
+						end
+						if trefill then
+							local m=minetest.get_meta(trefill)
+							local inv2=m:get_inventory()
+							local mes=m:get_int("mesein")
+							if inv:room_for_item("main", stack) then
+								local rstack=inv2:remove_item("main", stack)
+								inv:add_item("main",rstack)
+								if mes==2 or mes==3 then
+									smartshop.send_mesecon(trefill)
+								end
+							end
+						end
 					end
-
-					pinv:remove_item("main", pay)
-					if type==1 then inv:add_item("main", pay) end
-
-					if mesecon then
-						mesecon.receptor_on(pos)
-						minetest.get_node_timer(pos):start(1)
-					end
+					smartshop.send_mesecon(pos)
 				end
 			end
 		else
@@ -171,11 +211,10 @@ end
 minetest.register_on_player_receive_fields(function(player, form, pressed)
 	if form=="smartshop.showform" then
 		smartshop.receive_fields(player,pressed)
+	elseif form=="smartshop.showform2" then
+		smartshop.receive_fields2(player,pressed)
 	end
 end)
-
-
-
 
 smartshop.update_info=function(pos)
 	local meta=minetest.get_meta(pos)
@@ -225,9 +264,6 @@ smartshop.update_info=function(pos)
 		.. stuff.buy4 ..  stuff.name4
 		)
 end
-
-
-
 
 smartshop.update=function(pos,stat)
 --clear
@@ -315,20 +351,55 @@ smartshop.showform=function(pos,player,re)
 			meta:set_int("type",1)
 			creative=0
 		end
+
 		gui=""
 		.."size[8,10]"
+
 		.."button_exit[6,0;1.5,1;customer;Customer]"
 		.."button[7.2,0;1,1;sellall;All]"
 		.."label[0,0.2;Item:]"
 		.."label[0,1.2;Price:]"
-		.."list[nodemeta:" .. spos .. ";give1;2,0;1,1;]"
-		.."list[nodemeta:" .. spos .. ";pay1;2,1;1,1;]"
-		.."list[nodemeta:" .. spos .. ";give2;3,0;1,1;]"
-		.."list[nodemeta:" .. spos .. ";pay2;3,1;1,1;]"
-		.."list[nodemeta:" .. spos .. ";give3;4,0;1,1;]"
-		.."list[nodemeta:" .. spos .. ";pay3;4,1;1,1;]"
-		.."list[nodemeta:" .. spos .. ";give4;5,0;1,1;]"
-		.."list[nodemeta:" .. spos .. ";pay4;5,1;1,1;]"
+		.."list[nodemeta:" .. spos .. ";give1;1,0;1,1;]"
+		.."list[nodemeta:" .. spos .. ";pay1;1,1;1,1;]"
+		.."list[nodemeta:" .. spos .. ";give2;2,0;1,1;]"
+		.."list[nodemeta:" .. spos .. ";pay2;2,1;1,1;]"
+		.."list[nodemeta:" .. spos .. ";give3;3,0;1,1;]"
+		.."list[nodemeta:" .. spos .. ";pay3;3,1;1,1;]"
+		.."list[nodemeta:" .. spos .. ";give4;4,0;1,1;]"
+		.."list[nodemeta:" .. spos .. ";pay4;4,1;1,1;]"
+
+		.."button_exit[5,0;1,1;tsend;Send]"
+		.."button_exit[5,1;1,1;trefill;Refil]"
+
+		local tsend=smartshop.strpos(meta:get_string("item_send"),1)
+		local trefill=smartshop.strpos(meta:get_string("item_refill"),1)
+
+		if tsend then
+			local m=minetest.get_meta(tsend)
+			local title=m:get_string("title")
+			if title=="" or m:get_string("owner")~=meta:get_string("owner") then
+				meta:set_string("item_send","")
+				title="error"
+			end
+			gui=gui .."tooltip[tsend;Send payments to " ..  title .."]"
+		else
+			gui=gui .."tooltip[tsend;Send payments to storage]"
+			
+		end
+
+		if trefill then
+			local m=minetest.get_meta(trefill)
+			local title=m:get_string("title")
+			if title=="" or m:get_string("owner")~=meta:get_string("owner") then
+				meta:set_string("item_refill","")
+				title="error"
+			end
+			gui=gui .."tooltip[trefill;Refil from " .. title  .."]"
+		else
+			gui=gui .."tooltip[trefill;Refil from storage]"
+		end
+
+
 		if creative==1 then
 			gui=gui .."label[0.5,-0.4;Your stock is unlimeted becaouse you have creative or give]"
 			.."button[6,1;2.2,1;tooglelime;Toogle limit]"
@@ -369,7 +440,7 @@ minetest.register_node("smartshop:shop", {
 	sunlight_propagates = true,
 	light_source = 10,
 	on_timer = function (pos, elapsed)
-		if mesecon then
+		if smartshop.mesecon then
 			mesecon.receptor_off(pos)
 		end
 		return false
@@ -438,6 +509,158 @@ can_dig = function(pos, player)
 		local inv=meta:get_inventory()
 		if ((meta:get_string("owner")==player:get_player_name() or minetest.check_player_privs(player:get_player_name(), {protection_bypass=true})) and inv:is_empty("main") and inv:is_empty("pay1") and inv:is_empty("pay2") and inv:is_empty("pay3") and inv:is_empty("pay4") and inv:is_empty("give1") and inv:is_empty("give2") and inv:is_empty("give3") and inv:is_empty("give4")) or meta:get_string("owner")=="" then
 			smartshop.update(pos,"clear")
+			return true
+		end
+	end,
+})
+
+smartshop.receive_fields2=function(player,pressed)
+	local pname=player:get_player_name()
+	local pos=smartshop.user[pname]
+	if not pos then
+		return
+	end
+	local meta=minetest.get_meta(pos)
+
+	if pressed.mesesin then
+		local m=meta:get_int("mesein")
+		if m<=2 then
+			m=m+1
+		else
+			m=0
+		end
+		meta:set_int("mesein",m)
+		smartshop.showform2(pos,player)
+		return
+	elseif pressed.save then
+		local t=pressed.title
+		if t=="" then t="wifi" .. math.random(1,9999) end
+		meta:set_string("title",t)
+	end
+	smartshop.user[pname]=nil
+end
+
+smartshop.showform2=function(pos,player)
+	local meta=minetest.get_meta(pos)
+	local uname=player:get_player_name()
+	if meta:get_string("owner")~=uname and not minetest.check_player_privs(uname, {protection_bypass=true}) then return end
+	local inv = meta:get_inventory()
+	local spos=pos.x .. "," .. pos.y .. "," .. pos.z
+	local title=meta:get_string("title")
+
+	smartshop.user[uname]=pos
+
+	local gui="size[12,9]"
+
+	if title=="" then
+		title="wifi" .. math.random(1,999)
+	end
+
+	if smartshop.mesecon then
+		local m=meta:get_int("mesein")
+		if m==0 then
+			gui=gui .. "button[0,7;2,1;mesesin;Don't send]"
+		elseif m==1 then
+			gui=gui .. "button[0,7;2,1;mesesin;Incoming]"
+		elseif m==2 then
+			gui=gui .. "button[0,7;2,1;mesesin;Outcoming]"
+		elseif m==3 then
+			gui=gui .. "button[0,7;2,1;mesesin;Both]"
+		end
+		gui=gui.."tooltip[mesesin;Send mesecon signal when items from shops does:]"
+	end
+
+	gui=gui .. ""
+
+	.."field[0.3,5.3;2,1;title;;" .. title .."]"
+	gui=gui
+	.."tooltip[title;Used with connected smartshops]"
+	.."button_exit[0,6;2,1;save;Save]"
+
+	.."list[nodemeta:" .. spos .. ";main;0,0;12,5;]"
+	.."list[current_player;main;2,5;8,4;]"
+	.."listring[nodemeta:" .. spos .. ";main]"
+	.."listring[current_player;main]"
+	minetest.after((0.1), function(gui)
+		return minetest.show_formspec(uname, "smartshop.showform2",gui)
+	end, gui)
+
+	local a=smartshop.add_storage[uname]
+	if a then
+		if not a.pos then return end
+		if vector.distance(a.pos, pos)>smartshop.max_wifi_distance then
+			minetest.chat_send_player(uname, "Too far, max distance " .. smartshop.max_wifi_distance)
+		end
+		local meta=minetest.get_meta(a.pos)
+		local p=smartshop.strpos(pos)
+		if a.send and p then
+			meta:set_string("item_send",p)
+		elseif a.refill and p then
+			meta:set_string("item_refill",p)
+		end
+		minetest.chat_send_player(uname, "smartshop connected")
+		smartshop.add_storage[uname]=nil
+	end
+end
+
+minetest.register_node("smartshop:wifistorage", {
+	description = "Wifi storage",
+	tiles = {"default_chest_top.png^[colorize:#ffffff77^default_obsidian_glass.png"},
+	groups = {choppy = 2, oddly_breakable_by_hand = 1,tubedevice = 1, tubedevice_receiver = 1,mesecon=2},
+	paramtype = "light",
+	sunlight_propagates = true,
+	light_source = 10,
+	on_timer = function (pos, elapsed)
+		if smartshop.mesecon then
+			mesecon.receptor_off(pos)
+		end
+		return false
+	end,
+	tube = {insert_object = function(pos, node, stack, direction)
+			local meta = minetest.get_meta(pos)
+			local inv = meta:get_inventory()
+			local added = inv:add_item("main", stack)
+			return added
+		end,
+		can_insert = function(pos, node, stack, direction)
+			local meta = minetest.get_meta(pos)
+			local inv = meta:get_inventory()
+			return inv:room_for_item("main", stack)
+		end,
+		input_inventory = "main",
+		connect_sides = {left = 1, right = 1, front = 1, back = 1, top = 1, bottom = 1}},
+after_place_node = function(pos, placer)
+		local meta=minetest.get_meta(pos)
+		local name=placer:get_player_name()
+		meta:set_string("owner",name)
+		meta:set_string("infotext", "Wifi storage by: " .. name)
+	end,
+on_construct = function(pos)
+		local meta=minetest.get_meta(pos)
+		meta:get_inventory():set_size("main", 60)
+		meta:set_int("mesein",0)
+		meta:set_string("title","wifi" .. math.random(1,999))
+	end,
+on_rightclick = function(pos, node, player, itemstack, pointed_thing)
+		smartshop.showform2(pos,player)
+	end,
+allow_metadata_inventory_put = function(pos, listname, index, stack, player)
+		if stack:get_wear()==0 and (minetest.get_meta(pos):get_string("owner")==player:get_player_name() or minetest.check_player_privs(player:get_player_name(), {protection_bypass=true})) then
+		return stack:get_count()
+		end
+		return 0
+	end,
+allow_metadata_inventory_take = function(pos, listname, index, stack, player)
+		if minetest.get_meta(pos):get_string("owner")==player:get_player_name() or minetest.check_player_privs(player:get_player_name(), {protection_bypass=true}) then
+		return stack:get_count()
+		end
+		return 0
+	end,
+can_dig = function(pos, player)
+		local meta=minetest.get_meta(pos)
+		local inv=meta:get_inventory()
+		local p=player:get_player_name()
+		if (meta:get_string("owner")==p or minetest.check_player_privs(p, {protection_bypass=true})) and inv:is_empty("main") or meta:get_string("owner")=="" then
 			return true
 		end
 	end,
