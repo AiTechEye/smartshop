@@ -40,20 +40,13 @@ smartshop.get_offer=function(pos)
 	return offer
 end
 
-smartshop.not_pos=function(pos)
-	if not (pos and pos.x and pos.y and pos.z) then
-		return true
-	end
-end
-
-
-
 smartshop.receive_fields=function(player,pressed)
-		if pressed.customer then
-			return smartshop.showform(smartshop.user[player:get_player_name()],player,true)
+		local pos=smartshop.user[player:get_player_name()]
+		if not pos then
+			return
+		elseif pressed.customer then
+			return smartshop.showform(pos,player,true)
 		elseif pressed.sellall then
-			local pos=smartshop.user[player:get_player_name()]
-			if smartshop.not_pos(pos) then return end
 			local meta=minetest.get_meta(pos)
 			local pname=player:get_player_name()
 			if meta:get_int("sellall")==0 then
@@ -64,8 +57,6 @@ smartshop.receive_fields=function(player,pressed)
 				minetest.chat_send_player(pname, "Sell your stock only")
 			end
 		elseif pressed.tooglelime then
-			local pos=smartshop.user[player:get_player_name()]
-			if smartshop.not_pos(pos) then return end
 			local meta=minetest.get_meta(pos)
 			local pname=player:get_player_name()
 			if meta:get_int("type")==0 then
@@ -81,8 +72,6 @@ smartshop.receive_fields=function(player,pressed)
 				n=i
 				if pressed["buy" .. i] then break end
 			end
-			local pos=smartshop.user[player:get_player_name()]
-			if smartshop.not_pos(pos) then return end
 			local meta=minetest.get_meta(pos)
 			local type=meta:get_int("type")
 			local sellall=meta:get_int("sellall")
@@ -172,15 +161,11 @@ smartshop.receive_fields=function(player,pressed)
 				end
 			end
 		else
-			local pos=smartshop.user[player:get_player_name()]
-			if smartshop.not_pos(pos) then return end
-			if pos and pos.x then
-				smartshop.update_info(pos)
-				if smartshop.user[player:get_player_name()] or minetest.check_player_privs(player:get_player_name(), {protection_bypass=true}) then
-					local meta=minetest.get_meta(smartshop.user[player:get_player_name()])
-					if meta:get_string("owner")==player:get_player_name() then
-						smartshop.update(smartshop.user[player:get_player_name()],"update")
-					end
+			smartshop.update_info(pos)
+			if minetest.check_player_privs(player:get_player_name(), {protection_bypass=true}) then
+				local meta=minetest.get_meta(pos)
+				if meta:get_string("owner")==player:get_player_name() then
+					smartshop.update(pos,"update")
 				end
 			end
 			smartshop.user[player:get_player_name()]=nil
