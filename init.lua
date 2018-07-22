@@ -105,6 +105,7 @@ smartshop.receive_fields=function(player,pressed)
 						elseif sellall==1 and inv:contains_item("give" .. n, stack) then
 							if gc==1 then
 								nstack={stack=inv:get_stack("give" .. n, 1),take="give" .. n,n=1}
+								smartshop.update_info(pos)
 							else
 								nstack={item=stack,take="give" .. n}
 							end
@@ -162,12 +163,7 @@ smartshop.receive_fields=function(player,pressed)
 			end
 		else
 			smartshop.update_info(pos)
-			if minetest.check_player_privs(player:get_player_name(), {protection_bypass=true}) then
-				local meta=minetest.get_meta(pos)
-				if meta:get_string("owner")==player:get_player_name() then
-					smartshop.update(pos,"update")
-				end
-			end
+			smartshop.update(pos,"update")
 			smartshop.user[player:get_player_name()]=nil
 		end
 end
