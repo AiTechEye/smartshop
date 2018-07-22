@@ -253,7 +253,7 @@ smartshop.update=function(pos,stat)
 		if item~="" then
 			smartshop.tmp.item=item
 			smartshop.tmp.pos=spos
-			local e = minetest.env:add_entity({x=pos.x+pos2.x,y=pos.y+pos2.y,z=pos.z+pos2.z},"smartshop:item")
+			local e = minetest.add_entity({x=pos.x+pos2.x,y=pos.y+pos2.y,z=pos.z+pos2.z},"smartshop:item")
 			e:setyaw(math.pi*2 - node.param2 * math.pi/2)
 		end
 	end
