@@ -1,5 +1,5 @@
 License: CC0
-Version: 5
+Version: 7
 
 Like the title says, this is a smart and easy shop, that will also fit everywhere.
 
@@ -9,5 +9,8 @@ You can toogle it unlimited or limited if you have give or creative
 (unlimited will not take or add stuff to its inventory)
 
 The "All" button will limit your stock to the inventory or and the giveline, its on as default.
+
+wifi storage, send to and refile from wifi storages
+
 
 It also works with pipeworks, mesecons and aliveai
