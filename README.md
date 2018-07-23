@@ -2,7 +2,7 @@
 mod for minetest
 
 code/media license: CC0
-Version: 7
+Version: 7.1
 
 Like the title says, this is a smart and easy shop, that will also fit everywhere.
 
