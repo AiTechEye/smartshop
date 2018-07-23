@@ -88,14 +88,20 @@ smartshop.receive_fields=function(player,pressed)
 		elseif pressed.tsend then
 			smartshop.add_storage[pname]={send=true,pos=pos}
 			minetest.after(30, function(pname)
-				smartshop.add_storage[pname]=nil
+				if smartshop.add_storage[pname] then
+					minetest.chat_send_player(pname, "Time expired (30s)")
+					smartshop.add_storage[pname]=nil
+				end
 			end, pname)
 			minetest.chat_send_player(pname, "Open a storage owned by you")
 		return
 		elseif pressed.trefill then
 			smartshop.add_storage[pname]={refill=true,pos=pos}
 			minetest.after(30, function(pname)
-				smartshop.add_storage[pname]=nil
+				if smartshop.add_storage[pname] then
+					minetest.chat_send_player(pname, "Time expired (30s)")
+					smartshop.add_storage[pname]=nil
+				end
 			end, pname)
 			minetest.chat_send_player(pname, "Open a storage owned by you")
 		return
@@ -133,6 +139,7 @@ smartshop.receive_fields=function(player,pressed)
 			local inv=meta:get_inventory()
 			local pinv=player:get_inventory()
 			local pname=player:get_player_name()
+			local check_storage
 			if pressed["buy" .. n] then
 				local name=inv:get_stack("give" .. n,1):get_name()
 				local stack=name .." ".. inv:get_stack("give" .. n,1):get_count()
@@ -148,26 +155,27 @@ smartshop.receive_fields=function(player,pressed)
 						return
 					elseif type==1 and inv:room_for_item("main", pay)==false then
 						minetest.chat_send_player(pname, "Error: The owners stock is full, cant receive, exchange aborted.")
-						--return
 					else
 						if inv:contains_item("main", stack) then
 						elseif sellall==1 and inv:contains_item("give" .. n, stack) then
 							stack_to_use="give" .. n
 						else
 							minetest.chat_send_player(pname, "Error: The owners stock is end.")
-							return
+							check_storage=1
 						end
-						for i=0,32,1 do
-							if pinv:get_stack("main", i):get_name()==inv:get_stack("pay" .. n,1):get_name() and pinv:get_stack("main",i):get_wear()>0 then
-								minetest.chat_send_player(pname, "Error: your item is used")
-								return
+						if not check_storage then
+							for i=0,32,1 do
+								if pinv:get_stack("main", i):get_name()==inv:get_stack("pay" .. n,1):get_name() and pinv:get_stack("main",i):get_wear()>0 then
+									minetest.chat_send_player(pname, "Error: your item is used")
+									return
+								end
 							end
+							local rastack=inv:remove_item(stack_to_use, stack)
+							pinv:remove_item("main", pay)
+							pinv:add_item("main",rastack)
+							if type==1 then inv:add_item("main",pay) end
+							if type==0 then inv:add_item("main", rastack) end
 						end
-						local rastack=inv:remove_item(stack_to_use, stack)
-						pinv:remove_item("main", pay)
-						pinv:add_item("main",rastack)
-						if type==1 then inv:add_item("main",pay) end
-						if type==0 then inv:add_item("main", rastack) end
 					end
 -- send to / refill from wifi storage
 					if type==1 then
@@ -177,11 +185,15 @@ smartshop.receive_fields=function(player,pressed)
 							local m=minetest.get_meta(tsend)
 							local inv2=m:get_inventory()
 							local mes=m:get_int("mesein")
-							if inv2:room_for_item("main", pay) then
-								inv2:add_item("main",pay)
-								inv:remove_item("main", pay)
-								if mes==1 or mes==3 then
-									smartshop.send_mesecon(tsend)
+							for i=1,10,1 do
+								if inv2:room_for_item("main", pay) and inv:contains_item("main", pay) then
+									inv2:add_item("main",pay)
+									inv:remove_item("main", pay)
+									if mes==1 or mes==3 then
+										smartshop.send_mesecon(tsend)
+									end
+								else
+									break
 								end
 							end
 						end
@@ -189,11 +201,27 @@ smartshop.receive_fields=function(player,pressed)
 							local m=minetest.get_meta(trefill)
 							local inv2=m:get_inventory()
 							local mes=m:get_int("mesein")
-							if inv:room_for_item("main", stack) then
-								local rstack=inv2:remove_item("main", stack)
-								inv:add_item("main",rstack)
-								if mes==2 or mes==3 then
-									smartshop.send_mesecon(trefill)
+
+							local space=0
+--check if its room for other items, else the shop will stuck
+							for i=1,32,1 do
+								if inv:get_stack("main",i):get_count()==0 then
+									space=space+1
+								end
+							end
+							for i=1,space,1 do
+								if i<space and inv2:contains_item("main", stack) and inv:room_for_item("main", stack) then
+									local rstack=inv2:remove_item("main", stack)
+									inv:add_item("main",rstack)
+									if mes==2 or mes==3 then
+										smartshop.send_mesecon(trefill)
+									end
+									if check_storage then
+										check_storage=nil
+										minetest.chat_send_player(pname, "Try again, stock just refilled")
+									end
+								else
+									break
 								end
 							end
 						end
