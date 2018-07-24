@@ -296,7 +296,7 @@ end
 smartshop.update=function(pos,stat)
 --clear
 	local spos=minetest.pos_to_string(pos)
-	for _, ob in ipairs(minetest.env:get_objects_inside_radius(pos, 2)) do
+	for _, ob in ipairs(minetest.get_objects_inside_radius(pos, 2)) do
 		if ob and ob:get_luaentity() and ob:get_luaentity().smartshop and ob:get_luaentity().pos==spos then
 			ob:remove()	
 		end
