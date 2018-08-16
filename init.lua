@@ -318,7 +318,7 @@ smartshop.update=function(pos,stat)
 			smartshop.tmp.item=item
 			smartshop.tmp.pos=spos
 			local e = minetest.add_entity({x=pos.x+pos2.x,y=pos.y+pos2.y,z=pos.z+pos2.z},"smartshop:item")
-			e:setyaw(math.pi*2 - node.param2 * math.pi/2)
+			e:set_yaw(math.pi*2 - node.param2 * math.pi/2)
 		end
 	end
 end
@@ -693,3 +693,4 @@ can_dig = function(pos, player)
 		end
 	end,
 })
+
