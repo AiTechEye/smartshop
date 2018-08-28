@@ -117,15 +117,15 @@ smartshop.receive_fields=function(player,pressed)
 				meta:set_int("sellall",0)
 				minetest.chat_send_player(pname, "Sell your stock only")
 			end
-		elseif pressed.tooglelime then
+		elseif pressed.toogleee then
 			local meta=minetest.get_meta(pos)
 			local pname=player:get_player_name()
 			if meta:get_int("type")==0 then
 				meta:set_int("type",1)
-				minetest.chat_send_player(pname, "Your stock is limeted")
+				minetest.chat_send_player(pname, "Your stock is limited")
 			else
 				meta:set_int("type",0)
-				minetest.chat_send_player(pname, "Your stock is unlimeted")
+				minetest.chat_send_player(pname, "Your stock is unlimited")
 			end
 		elseif not pressed.quit then
 			local n=1
@@ -251,7 +251,7 @@ smartshop.update_info=function(pos)
 	local gve=0
 	if meta:get_int("sellall")==1 then gve=1 end
 	if meta:get_int("type")==0 then
-		meta:set_string("infotext","(Smartshop by " .. owner ..") Stock is unlimeted")
+		meta:set_string("infotext","(Smartshop by " .. owner ..") Stock is unlimited")
 		return false
 	end
 	local name=""
