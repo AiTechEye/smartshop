@@ -1,7 +1,8 @@
 # smartshop
 mod for minetest
 
-code/media license: CC0
+Licenses: code: LGPL-2.1, media: CC BY-SA-4.0
+
 Version: 7.11
 
 Like the title says, this is a smart and easy shop, that will also fit everywhere.
