@@ -1,0 +1,1 @@
+smartshop.max_wifi_distance (Maximum distance between smartshop and wifi storage) int 30
