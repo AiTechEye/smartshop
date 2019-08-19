@@ -28,7 +28,6 @@ function smartshop.wifi_showform(pos, player)
     if not smartshop.util.can_access(player, pos) then return end
     local meta        = minetest.get_meta(pos)
     local player_name = player:get_player_name()
-    local inv               = meta:get_inventory()
     local spos              = pos.x .. "," .. pos.y .. "," .. pos.z
     local title             = meta:get_string("title")
 
@@ -69,21 +68,21 @@ function smartshop.wifi_showform(pos, player)
         return minetest.show_formspec(player_name, "smartshop.wifi_showform", gui)
     end, gui)
 
-    local a = add_storage[player_name]
+    local a = smartshop.add_storage[player_name]
     if a then
         if not a.pos then return end
-        if vector.distance(a.pos, pos) > max_wifi_distance then
-            minetest.chat_send_player(player_name, "Too far, max distance " .. max_wifi_distance)
+        if vector.distance(a.pos, pos) > smartshop.settings.max_wifi_distance then
+            minetest.chat_send_player(player_name, "Too far, max distance " .. smartshop.settings.max_wifi_distance)
         end
         local meta = minetest.get_meta(a.pos)
-        local p    = pos_to_string(pos)
+        local p    = minetest.pos_to_string(pos)
         if a.send and p then
             meta:set_string("item_send", p)
         elseif a.refill and p then
             meta:set_string("item_refill", p)
         end
         minetest.chat_send_player(player_name, "smartshop connected")
-        add_storage[player_name] = nil
+        smartshop.add_storage[player_name] = nil
     end
 end
 

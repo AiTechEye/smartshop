@@ -72,9 +72,9 @@ end
 local function add_entity(pos, param2, index, item)
     local ep = element_pos[param2 + 1]
     local e  = minetest.add_entity(
-            vector.add(pos, ep[index]),
-            "smartshop:item",
-            minetest.serialize({item=item, pos=pos})
+        vector.add(pos, ep[index]),
+        "smartshop:item",
+        minetest.serialize({item=item, pos=pos})
     )
     e:set_yaw(math.pi * 2 - param2 * math.pi / 2)
     return e
@@ -141,7 +141,7 @@ minetest.register_lbm({
 
 minetest.register_lbm({
 	name = "smartshop:load_shop",
-	nodenames = {"smartshop:shop"},
+	nodenames = {"smartshop:shop", "smartshop:shop_full", "smartshop:shop_empty", "smartshop:shop_used"},
     run_at_every_load = true,
 	action = function(pos, node)
         smartshop.update_shop_display(pos)

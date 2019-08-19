@@ -26,3 +26,24 @@ function smartshop.util.can_access(player, pos)
         minetest.check_player_privs(player_name, { protection_bypass = true })
     )
 end
+
+function smartshop.util.deepcopy(orig, copies)
+    copies = copies or {}
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        if copies[orig] then
+            copy = copies[orig]
+        else
+            copy = {}
+            for orig_key, orig_value in next, orig, nil do
+                copy[smartshop.util.deepcopy(orig_key, copies)] = smartshop.util.deepcopy(orig_value, copies)
+            end
+            copies[orig] = copy
+            setmetatable(copy, smartshop.util.deepcopy(getmetatable(orig), copies))
+        end
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+end

@@ -157,6 +157,8 @@ local function buy_item_n(player, pos, n)
 	if not is_unlimited then
 		update_wifi_storage(meta, shop_inv, pay_name, get_name, exchange_possible, player_name)
 	end
+
+	smartshop.update_shop_color(pos)
 end
 
 local function get_shop_owner_gui(spos, shop_meta, is_creative)
@@ -262,6 +264,7 @@ function smartshop.shop_receive_fields(player, pressed)
         smartshop.update_shop_info(pos)
         smartshop.update_shop_display(pos, "update")
         smartshop.player_pos[player:get_player_name()] = nil
+		smartshop.update_shop_color(pos)
     end
 end
 

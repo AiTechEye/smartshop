@@ -18,6 +18,7 @@ local function shop_tube_insert(pos, node, stack, direction)
     local meta  = minetest.get_meta(pos)
     local inv   = meta:get_inventory()
     local added = inv:add_item("main", stack)
+    smartshop.update_shop_color(pos)
     return added
 end
 
@@ -25,6 +26,7 @@ local function wifi_tube_insert(pos, node, stack, direction)
     local meta  = minetest.get_meta(pos)
     local inv   = meta:get_inventory()
     local added = inv:add_item("main", stack)
+    smartshop.update_shop_color(pos)
     return added
 end
 
@@ -54,24 +56,25 @@ local function shop_after_place_node(pos, placer)
 end
 
 local function wifi_after_place_node(pos, placer)
-        local meta = minetest.get_meta(pos)
-        local name = placer:get_player_name()
-        meta:set_string("owner", name)
-        meta:set_string("infotext", "Wifi storage by: " .. name)
-    end
+    local meta = minetest.get_meta(pos)
+    local name = placer:get_player_name()
+    meta:set_string("owner", name)
+    meta:set_string("infotext", "Wifi storage by: " .. name)
+end
 
 local function shop_on_construct(pos)
     local meta = minetest.get_meta(pos)
     meta:set_int("state", 0)
-    meta:get_inventory():set_size("main", 32)
-    meta:get_inventory():set_size("give1", 1)
-    meta:get_inventory():set_size("pay1", 1)
-    meta:get_inventory():set_size("give2", 1)
-    meta:get_inventory():set_size("pay2", 1)
-    meta:get_inventory():set_size("give3", 1)
-    meta:get_inventory():set_size("pay3", 1)
-    meta:get_inventory():set_size("give4", 1)
-    meta:get_inventory():set_size("pay4", 1)
+    local inv = meta:get_inventory()
+    inv:set_size("main", 32)
+    inv:set_size("give1", 1)
+    inv:set_size("pay1", 1)
+    inv:set_size("give2", 1)
+    inv:set_size("pay2", 1)
+    inv:set_size("give3", 1)
+    inv:set_size("pay3", 1)
+    inv:set_size("give4", 1)
+    inv:set_size("pay4", 1)
 end
 
 local function wifi_on_construct(pos)
@@ -152,12 +155,17 @@ local function wifi_can_dig(pos, player)
     end
 end
 
-minetest.register_node("smartshop:shop", {
+local smartshop_def = {
     description                   = "Smartshop",
     tiles                         = { "default_chest_top.png^[colorize:#ffffff77^default_obsidian_glass.png" },
-    groups                        = { choppy = 2, oddly_breakable_by_hand = 1, tubedevice = 1, tubedevice_receiver = 1, mesecon = 2 },
+    groups                        = { choppy = 2,
+                                      oddly_breakable_by_hand = 1,
+                                      tubedevice = 1,
+                                      tubedevice_receiver = 1,
+                                      mesecon = 2 },
     drawtype                      = "nodebox",
-    node_box                      = { type = "fixed", fixed = { -0.5, -0.5, -0.0, 0.5, 0.5, 0.5 } },
+    node_box                      = { type = "fixed",
+                                      fixed = { -0.5, -0.5, -0.0, 0.5, 0.5, 0.5 } },
     paramtype2                    = "facedir",
     paramtype                     = "light",
     sunlight_propagates           = true,
@@ -166,7 +174,12 @@ minetest.register_node("smartshop:shop", {
     tube                          = { insert_object   = shop_tube_insert,
                                       can_insert      = shop_tube_can_insert,
                                       input_inventory = "main",
-                                      connect_sides   = { left = 1, right = 1, front = 1, back = 1, top = 1, bottom = 1 } },
+                                      connect_sides   = { left = 1,
+                                                          right = 1,
+                                                          front = 1,
+                                                          back = 1,
+                                                          top = 1,
+                                                          bottom = 1 } },
     after_place_node              = shop_after_place_node,
     on_construct                  = shop_on_construct,
     on_rightclick                 = shop_on_rightclick,
@@ -174,7 +187,27 @@ minetest.register_node("smartshop:shop", {
     allow_metadata_inventory_take = shop_allow_take,
     allow_metadata_inventory_move = shop_allow_move,
     can_dig                       = shop_can_dig,
-})
+}
+
+local smartshop_full_def = smartshop.util.deepcopy(smartshop_def)
+smartshop_full_def.drop = "smartshop:shop"
+smartshop_full_def.tiles = { "default_chest_top.png^[colorize:#0000FF77^default_obsidian_glass.png" }
+smartshop_full_def.groups.not_in_creative_inventory = 1
+
+local smartshop_empty_def = smartshop.util.deepcopy(smartshop_def)
+smartshop_empty_def.drop = "smartshop:shop"
+smartshop_empty_def.tiles = { "default_chest_top.png^[colorize:#FF000077^default_obsidian_glass.png" }
+smartshop_empty_def.groups.not_in_creative_inventory = 1
+
+local smartshop_used_def = smartshop.util.deepcopy(smartshop_def)
+smartshop_used_def.drop = "smartshop:shop"
+smartshop_used_def.tiles = { "default_chest_top.png^[colorize:#00FF0077^default_obsidian_glass.png" }
+smartshop_used_def.groups.not_in_creative_inventory = 1
+
+minetest.register_node("smartshop:shop", smartshop_def)
+minetest.register_node("smartshop:shop_full", smartshop_full_def)
+minetest.register_node("smartshop:shop_empty", smartshop_empty_def)
+minetest.register_node("smartshop:shop_used", smartshop_used_def)
 
 minetest.register_node("smartshop:wifistorage", {
     description                   = "Wifi storage",
@@ -195,3 +228,81 @@ minetest.register_node("smartshop:wifistorage", {
     allow_metadata_inventory_take = wifi_allow_take,
     can_dig                       = wifi_can_dig,
 })
+
+local function exchange_status(inv, slot)
+    local pay_key = "pay"..slot
+    local pay_stack = inv:get_stack(pay_key, 1)
+    local give_key = "give"..slot
+    local give_stack = inv:get_stack(give_key, 1)
+
+    if give_stack:is_empty() or pay_stack:is_empty() then
+        return "skip"
+    elseif not inv:room_for_item("main", pay_stack) then
+        return "full"
+    elseif not inv:contains_item("main", give_stack) then
+        return "empty"
+    elseif inv:contains_item("main", pay_stack) then
+        return "used"
+    else
+        return "ignore"
+    end
+end
+
+function smartshop.update_shop_color(pos)
+    --[[
+    normal: nothing in the give slots
+    full  : no exchanges possible because no room for pay items
+    empty : no exchanges possible because no more give items
+    used  : pay items in main
+    ]]--
+    local node = minetest.get_node(pos)
+    local cur_name = node.name
+    if (
+        cur_name ~= "smartshop:shop" and
+        cur_name ~= "smartshop:shop_full" and
+        cur_name ~= "smartshop:shop_empty" and
+        cur_name ~= "smartshop:shop_used"
+    ) then
+        return
+    end
+    local meta = minetest.get_meta(pos)
+    local inv  = meta:get_inventory()
+
+    local total = 4
+    local full_count = 0
+    local empty_count = 0
+    local used = false
+
+    for slot = 1,4 do
+        local status = exchange_status(inv, slot)
+        if status == "full" then
+            full_count = full_count + 1
+        elseif status == "empty" then
+            empty_count = empty_count + 1
+        elseif status == "used" then
+            used = true
+        elseif status == "skip" then
+            total = total - 1
+        end
+    end
+
+    local to_swap
+    if total == 0 then
+        to_swap = "smartshop:shop"
+    elseif full_count == total then
+        to_swap = "smartshop:shop_full"
+    elseif empty_count == total then
+        to_swap = "smartshop:shop_empty"
+    elseif used then
+        to_swap = "smartshop:shop_used"
+    else
+        to_swap = "smartshop:shop"
+    end
+
+    if cur_name ~= to_swap then
+        minetest.swap_node(pos, {
+            name = to_swap,
+            param2 = node.param2
+        })
+    end
+end
