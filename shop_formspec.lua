@@ -181,7 +181,7 @@ local function get_shop_owner_gui(spos, shop_meta, is_creative)
 
     local tsend   = minetest.string_to_pos(shop_meta:get_string("item_send"))
     local trefill = minetest.string_to_pos(shop_meta:get_string("item_refill"))
-	local is_unlimited = meta:get_int("type") == 0
+	local is_unlimited = shop_meta:get_int("type") == 0
 
     if tsend then
         local m     = minetest.get_meta(tsend)

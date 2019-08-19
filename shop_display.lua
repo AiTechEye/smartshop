@@ -6,13 +6,15 @@ local element_dir = {
 }
 
 local element_pos = {
-    { vector.new(0.2, 0.2, 0), vector.new(-0.2, 0.2, 0), vector.new(0.2, -0.2, 0), vector.new(-0.2, -0.2, 0) },
-    { vector.new(0, 0.2, 0.2), vector.new(0, 0.2, -0.2), vector.new(0, -0.2, 0.2), vector.new(0, -0.2, -0.2) },
-    { vector.new(-0.2, 0.2, 0), vector.new(0.2, 0.2, 0), vector.new(-0.2, -0.2, 0), vector.new(0.2, -0.2, 0) },
-    { vector.new(0, 0.2, -0.2), vector.new(0, 0.2, 0.2), vector.new(0, -0.2, -0.2), vector.new(0, -0.2, 0.2) },
+    { vector.new(0.2, 0.2, -0.2), vector.new(-0.2, 0.2, -0.2), vector.new(0.2, -0.2, -0.2), vector.new(-0.2, -0.2, -0.2) },
+    { vector.new(-0.2, 0.2, 0.2), vector.new(-0.2, 0.2, -0.2), vector.new(-0.2, -0.2, 0.2), vector.new(-0.2, -0.2, -0.2) },
+    { vector.new(-0.2, 0.2, 0.2), vector.new(0.2, 0.2, 0.2), vector.new(-0.2, -0.2, 0.2), vector.new(0.2, -0.2, 0.2) },
+    { vector.new(0.2, 0.2, -0.2), vector.new(0.2, 0.2, 0.2), vector.new(0.2, -0.2, -0.2), vector.new(0.2, -0.2, 0.2) },
 }
 
 local entity_offset = vector.new(0.01, 6.5/16, 0.01)
+
+local entities_by_pos = {}
 
 function smartshop.update_shop_info(pos)
     local shop_meta = minetest.get_meta(pos)
@@ -59,14 +61,12 @@ function smartshop.update_shop_info(pos)
 end
 
 function smartshop.clear_shop_display(pos)
-    for _, ob in ipairs(minetest.get_objects_inside_radius(pos, 1)) do
-        if ob then
-            local la = ob:get_luaentity()
-            if la and la.smartshop and vector.equals(la.pos, pos) then
-                ob:remove()
-            end
-        end
+    local spos       = minetest.pos_to_string(pos)
+    local entities = entities_by_pos[spos] or {}
+    for _, existing_entity in pairs(entities) do
+        existing_entity:remove()
     end
+    entities_by_pos[spos] = {}
 end
 
 local function add_entity(pos, param2, index, item)
@@ -77,12 +77,32 @@ local function add_entity(pos, param2, index, item)
             minetest.serialize({item=item, pos=pos})
     )
     e:set_yaw(math.pi * 2 - param2 * math.pi / 2)
+    return e
+end
+
+local function set_entity(pos, index, entity)
+    local spos       = minetest.pos_to_string(pos)
+    local entities = entities_by_pos[spos] or {}
+    local existing_entity = entities[index]
+    if existing_entity then
+        existing_entity:remove()
+    end
+    entities[index] = entity
+    entities_by_pos[spos] = entities
+end
+
+local function remove_entity(pos, index)
+    local spos       = minetest.pos_to_string(pos)
+    local entities = entities_by_pos[spos] or {}
+    local existing_entity = entities[index]
+    if existing_entity then
+        existing_entity:remove()
+    end
+    entities[index] = nil
+    entities_by_pos[spos] = entities
 end
 
 function smartshop.update_shop_display(pos)
-    --clear
-    smartshop.clear_shop_display(pos)
-    --update
     local param2      = minetest.get_node(pos).param2
     local dir         = element_dir[param2 + 1]
     if not dir then return end
@@ -94,8 +114,45 @@ function smartshop.update_shop_display(pos)
     for index = 1, 4 do
         local give_stack = shop_inv:get_stack("give" .. index, 1)
         if not give_stack:is_empty() and give_stack:is_known() then
-            add_entity(entity_pos, param2, index, give_stack:get_name())
+            local e = add_entity(entity_pos, param2, index, give_stack:get_name())
+            set_entity(pos, index, e)
+        else
+            remove_entity(pos, index)
         end
     end
 end
 
+minetest.register_lbm({
+	name = "smartshop:remove_old_entities",
+	nodenames = {"smartshop:shop"},
+    run_at_every_load = false,
+	action = function(pos, node)
+        local spos = minetest.pos_to_string(pos)
+        for _, ob in ipairs(minetest.get_objects_inside_radius(pos, 3)) do
+            if ob then
+                local le = ob:get_luaentity()
+                if le and le.smartshop and le.pos == spos then
+                    ob:remove()
+                end
+            end
+        end
+	end,
+})
+
+minetest.register_lbm({
+	name = "smartshop:load_shop",
+	nodenames = {"smartshop:shop"},
+    run_at_every_load = true,
+	action = function(pos, node)
+        smartshop.update_shop_display(pos)
+	end,
+})
+
+minetest.register_on_shutdown(function()
+    for _, entities in pairs(entities_by_pos) do
+        for _, existing_entity in pairs(entities) do
+            existing_entity:remove()
+        end
+    end
+    entities_by_pos = {}
+end)
