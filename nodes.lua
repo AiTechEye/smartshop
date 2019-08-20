@@ -37,6 +37,7 @@ local function shop_after_place_node(pos, placer)
     meta:set_string("infotext", "Shop by: " .. player_name)
     meta:set_int("unlimited", is_creative)
     meta:set_int("creative", is_creative)
+    smartshop.update_shop_color(pos)
 end
 
 local function wifi_after_place_node(pos, placer)

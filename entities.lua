@@ -9,6 +9,48 @@ titanium:glass
 tubelib_addons3:pushing_chest
 ]]--
 
+local function get_image_from_tile(tile)
+    if type(tile) == "string" then
+        return tile
+    elseif type(tile) == "table" then
+        if type(tile.image) == "string" then
+            return tile.image
+        elseif type(tile.name) == "string" then
+            return tile.name
+        end
+    end
+    return "unknown_node.png"
+end
+
+local function get_image_cube(tiles)
+    if #tiles == 6 then
+        return minetest.inventorycube(
+            get_image_from_tile(tiles[1]),
+            get_image_from_tile(tiles[6]),
+            get_image_from_tile(tiles[3])
+        )
+    elseif #tiles == 4 then
+        return minetest.inventorycube(
+            get_image_from_tile(tiles[1]),
+            get_image_from_tile(tiles[4]),
+            get_image_from_tile(tiles[3])
+        )
+    elseif #tiles == 3 then
+        return minetest.inventorycube(
+            get_image_from_tile(tiles[1]),
+            get_image_from_tile(tiles[3]),
+            get_image_from_tile(tiles[3])
+        )
+    elseif #tiles >= 1 then
+        return minetest.inventorycube(
+            get_image_from_tile(tiles[1]),
+            get_image_from_tile(tiles[1]),
+            get_image_from_tile(tiles[1])
+        )
+    end
+    return "unknown_node.png"
+end
+
 
 local function get_image(item)
     local def = (
@@ -19,63 +61,42 @@ local function get_image(item)
         {}
     )
 
-    if debug then
-        if not cache[item] then
-            minetest.log('warning', ('[smartshop:debug] definition for %s'):format(item))
-            for key, value in pairs(def) do
-                minetest.log('warning', ('[smartshop:debug]     %q = %q'):format(key, minetest.serialize(value)))
-            end
-            cache[item] = true
-        end
-    end
-
     local image
+    local tiles = def.tiles or def.tile_images
     if def.inventory_image and def.inventory_image ~= '' then
         image = def.inventory_image
-    elseif def.tiles then
-        if type(def.tiles) == 'string' then
-            image = def.tiles
-        elseif type(def.tiles) == 'table' then
+    elseif tiles then
+        local tiles = def.tiles or def.tile_images
+        if type(tiles) == 'string' then
+            image = tiles
+        elseif type(tiles) == 'table' then
             if (
                 (not def.type or def.type == "node") and
-                (not def.drawtype or def.drawtype == "normal" or def.drawtype == "allfaces" or def.drawtype == "allfaces_optional" or def.drawtype == "glasslike" or def.drawtype == "glasslike_framed" or def.drawtype == "glasslike_framed_optional" or def.drawtype == "liquid")
+                (not def.drawtype or
+                 def.drawtype == "normal" or
+                 def.drawtype == "allfaces" or
+                 def.drawtype == "allfaces_optional" or
+                 def.drawtype == "glasslike" or
+                 def.drawtype == "glasslike_framed" or
+                 def.drawtype == "glasslike_framed_optional" or
+                 def.drawtype == "liquid")
             ) then
-                if type(def.tiles[1]) == "string" then
-                    if #def.tiles == 6 and type(def.tiles[1]) == "string" and type(def.tiles[3]) == "string" and type(def.tiles[5]) == "string" then
-                        image = minetest.inventorycube(def.tiles[1], def.tiles[3], def.tiles[5])
-                    elseif #def.tiles == 3 and type(def.tiles[1]) == "string" and type(def.tiles[3]) == "string" then
-                        image = minetest.inventorycube(def.tiles[1], def.tiles[3], def.tiles[3])
-                    elseif type(def.tiles[1]) == "string" then
-                        image = minetest.inventorycube(def.tiles[1], def.tiles[1], def.tiles[1])
-                    end
-                elseif type(def.tiles[1]) == "table" then
-                    if #def.tiles == 6 and type(def.tiles[1]) == "table" and type(def.tiles[1].name) == "string" and type(def.tiles[3]) == "table" and type(def.tiles[3].name) == "string" and type(def.tiles[5]) == "table" and type(def.tiles[5].name) == "string" then
-                        image = minetest.inventorycube(def.tiles[1].name, def.tiles[3].name, def.tiles[5].name)
-                    elseif #def.tiles == 3 and type(def.tiles[1]) == "table" and type(def.tiles[1].name) == "string" and type(def.tiles[3]) == "table" and type(def.tiles[3].name) == "string" then
-                        image = minetest.inventorycube(def.tiles[1].name, def.tiles[3].name, def.tiles[3].name)
-                    elseif type(def.tiles[1]) == "table" and type(def.tiles[1].name) == "string" then
-                        image = minetest.inventorycube(def.tiles[1].name, def.tiles[1].name, def.tiles[1].name)
-                    end
-                end
+                image = get_image_cube(tiles)
             else
-                image = def.tiles[1]
+                image = get_image_from_tile(tiles[1])
             end
         end
     end
 
-    if type(image) == "table" then
-        image = image.name
-    end
-
-    if not image and not cache[item] then
-        minetest.log('warning', ('[smartshop] definition for %s'):format(item))
+    if (debug or not image or image == "unknown_node.png") and not cache[item] then
+        smartshop.log('warning', '[smartshop] definition for %s', item)
         for key, value in pairs(def) do
-            minetest.log('warning', ('[smartshop]     %q = %q'):format(key, minetest.serialize(value)))
+            smartshop.log('warning', '[smartshop]     %q = %q', key, minetest.serialize(value))
         end
         cache[item] = true
     end
 
-    return image
+    return image or "unknown_node.png"
 end
 
 minetest.register_entity("smartshop:item", {
