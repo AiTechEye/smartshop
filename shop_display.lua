@@ -74,14 +74,14 @@ local function add_entity(pos, param2, index, item)
     local e  = minetest.add_entity(
         vector.add(pos, ep[index]),
         "smartshop:item",
-        minetest.serialize({item=item, pos=pos})
+        minetest.serialize({item=item, pos=pos, index=index})
     )
     e:set_yaw(math.pi * 2 - param2 * math.pi / 2)
     return e
 end
 
 local function set_entity(pos, index, entity)
-    local spos       = minetest.pos_to_string(pos)
+    local spos     = minetest.pos_to_string(pos)
     local entities = entities_by_pos[spos] or {}
     local existing_entity = entities[index]
     if existing_entity then
@@ -92,7 +92,7 @@ local function set_entity(pos, index, entity)
 end
 
 local function remove_entity(pos, index)
-    local spos       = minetest.pos_to_string(pos)
+    local spos     = minetest.pos_to_string(pos)
     local entities = entities_by_pos[spos] or {}
     local existing_entity = entities[index]
     if existing_entity then
@@ -100,6 +100,17 @@ local function remove_entity(pos, index)
     end
     entities[index] = nil
     entities_by_pos[spos] = entities
+end
+
+local function remove_entities(pos)
+    for _, ob in ipairs(minetest.get_objects_inside_radius(pos, 3)) do
+        if ob then
+            local le = ob:get_luaentity()
+            if le and (le.smartshop or (le.pos and type(le.pos) == "table" and vector.equals(pos, vector.round(le.pos)))) then
+                ob:remove()
+            end
+        end
+    end
 end
 
 function smartshop.update_shop_display(pos)
@@ -123,28 +134,14 @@ function smartshop.update_shop_display(pos)
 end
 
 minetest.register_lbm({
-	name = "smartshop:remove_old_entities",
-	nodenames = {"smartshop:shop"},
-    run_at_every_load = false,
-	action = function(pos, node)
-        local spos = minetest.pos_to_string(pos)
-        for _, ob in ipairs(minetest.get_objects_inside_radius(pos, 3)) do
-            if ob then
-                local le = ob:get_luaentity()
-                if le and le.smartshop and le.pos == spos then
-                    ob:remove()
-                end
-            end
-        end
-	end,
-})
-
-minetest.register_lbm({
 	name = "smartshop:load_shop",
 	nodenames = {"smartshop:shop", "smartshop:shop_full", "smartshop:shop_empty", "smartshop:shop_used"},
     run_at_every_load = true,
 	action = function(pos, node)
+        smartshop.clear_shop_display(pos)
+        remove_entities(pos)
         smartshop.update_shop_display(pos)
+        smartshop.update_shop_color(pos)
 	end,
 })
 
