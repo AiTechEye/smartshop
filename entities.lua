@@ -58,11 +58,11 @@ minetest.register_entity("smartshop:item", {
                             image = minetest.inventorycube(def.tiles[1], def.tiles[1], def.tiles[1])
                         end
                     elseif type(def.tiles[1]) == "table" then
-                        if #def.tiles == 6 then
+                        if #def.tiles == 6 and def.tiles[1].name and def.tiles[3].name and def.tiles[5].name then
                             image = minetest.inventorycube(def.tiles[1].name, def.tiles[3].name, def.tiles[5].name)
-                        elseif #def.tiles == 3 then
+                        elseif #def.tiles == 3 and def.tiles[1].name and def.tiles[3].name then
                             image = minetest.inventorycube(def.tiles[1].name, def.tiles[3].name, def.tiles[3].name)
-                        else
+                        elseif #def.tiles == 3 and def.tiles[1].name then
                             image = minetest.inventorycube(def.tiles[1].name, def.tiles[1].name, def.tiles[1].name)
                         end
                     end
