@@ -4,6 +4,6 @@ if smartshop.settings.has_mesecon then
         minetest.get_node_timer(pos):start(1)
     end
 else
-    function smartshop.send_mesecon(pos) end
+    function smartshop.send_mesecon() end
 end
 

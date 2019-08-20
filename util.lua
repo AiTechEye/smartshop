@@ -3,7 +3,7 @@ smartshop.util = {}
 function smartshop.util.string_to_pos(spos)
     -- can't just use minetest.string_to_pos for sake of backward compatibility
     if not spos or type(spos) ~= "string" then return nil end
-    local x, y, z = re.match('^%s*%(%s*(%d+)[%s,]+(%d+)[%s,]+(%d+)%s*%)%s*$')
+    local x, y, z = spos:match('^%s*%(%s*(%d+)[%s,]+(%d+)[%s,]+(%d+)%s*%)%s*$')
     if x and y and z then
         return {x=tonumber(x), y=tonumber(y), z=tonumber(z)}
     end
@@ -28,6 +28,7 @@ function smartshop.util.can_access(player, pos)
 end
 
 function smartshop.util.deepcopy(orig, copies)
+    -- taken from lua documentation
     copies = copies or {}
     local orig_type = type(orig)
     local copy

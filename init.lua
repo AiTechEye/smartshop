@@ -1,6 +1,7 @@
 smartshop = {}
+smartshop.redo = true
+smartshop.version = '1.0.0'
 
-smartshop.version = '8.0.0'
 local modname = minetest.get_current_modname()
 smartshop.modname = modname
 smartshop.modpath = minetest.get_modpath(modname)

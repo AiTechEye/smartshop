@@ -1,19 +1,11 @@
-# smartshop
-mod for minetest
-
+# Smartshop Redo
 Licenses: code: LGPL-2.1, media: CC BY-SA-4.0
 
-Version: 7.11
+Version: Redo 1.0.0
 
-Like the title says, this is a smart and easy shop, that will also fit everywhere.
+This is a successor to the existing smartshop mod, that fixes numerous issues and gripes.
+It is possible to update existing installations of the smartshop mod to this version.
+However, the API has changed significantly, so any mod that depended on smartshop in the
+past will probably need to be updated.
 
-it is a mix of a vending machine, a shop, item frames and light.
-
-You can toogle it unlimited or limited if you have give or creative
-(unlimited will not take or add stuff to its inventory)
-
-The "All" button will limit your stock to the inventory or and the giveline, its on as default.
-
-wifi storage, send to and refill from wifi storages
-
-It also works with pipeworks, mesecon and aliveai
+More documentation is on the TODO list. Please be patient. 

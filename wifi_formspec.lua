@@ -1,9 +1,7 @@
 function smartshop.wifi_receive_fields(player, pressed)
     local player_name = player:get_player_name()
     local pos         = smartshop.player_pos[player_name]
-    if not pos then
-        return
-    end
+    if not pos then return end
     local meta = minetest.get_meta(pos)
 
     if pressed.mesesin then
@@ -18,7 +16,9 @@ function smartshop.wifi_receive_fields(player, pressed)
         return
     elseif pressed.save then
         local t = pressed.title
-        if t == "" then t = "wifi" .. math.random(1, 9999) end
+        if not t or t == "" then
+            t = "wifi " .. minetest.pos_to_string(pos)
+        end
         meta:set_string("title", t)
     end
     smartshop.player_pos[player_name] = nil
@@ -36,8 +36,10 @@ function smartshop.wifi_showform(pos, player)
     local gui               = "size[12,9]"
 
     if title == "" then
-        title = "wifi" .. math.random(1, 999)
+        title = "wifi " .. minetest.pos_to_string(pos)
     end
+
+    title = minetest.formspec_escape(title)
 
     if smartshop.settings.has_mesecon then
         local m = meta:get_int("mesein")

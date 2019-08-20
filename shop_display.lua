@@ -20,11 +20,10 @@ function smartshop.update_shop_info(pos)
     local shop_meta = minetest.get_meta(pos)
     local shop_inv  = shop_meta:get_inventory()
     local owner     = shop_meta:get_string("owner")
-    local give_line = shop_meta:get_int("sellall") == 1
 
-	if shop_meta:get_int("type") == 0 then
+	if shop_meta:get_int("unlimited") == 1 then
         shop_meta:set_string("infotext", "(Smartshop by " .. owner .. ") Stock is unlimited")
-        return false
+        return
     end
 
 	local inv_totals = {}
@@ -42,7 +41,7 @@ function smartshop.update_shop_info(pos)
 		if not give_stack:is_empty() and give_stack:is_known() and give_stack:get_wear() == 0 then
 			local name  = give_stack:get_name()
 	        local count = give_stack:get_count()
-			local stock = (give_line and count or 0) + (inv_totals[name] or 0)
+			local stock = inv_totals[name] or 0
 			local buy   = math.floor(stock / count)
 			if buy ~= 0 then
 				local def         = give_stack:get_definition()
@@ -135,13 +134,35 @@ end
 
 minetest.register_lbm({
 	name = "smartshop:load_shop",
-	nodenames = {"smartshop:shop", "smartshop:shop_full", "smartshop:shop_empty", "smartshop:shop_used"},
+	nodenames = {
+        "smartshop:shop",
+        "smartshop:shop_full",
+        "smartshop:shop_empty",
+        "smartshop:shop_used",
+        "smartshop:shop_admin"
+    },
     run_at_every_load = true,
 	action = function(pos, node)
         smartshop.clear_shop_display(pos)
         remove_entities(pos)
         smartshop.update_shop_display(pos)
+        smartshop.update_shop_info(pos)
         smartshop.update_shop_color(pos)
+        local meta = minetest.get_meta(pos)
+        local metatable = meta:to_table() or {}
+        if meta.creative == 1 then
+            if metatable.type == 0 then
+                metatable.unlimited = 1
+                metatable.item_send = nil
+                metatable.item_refill = nil
+            elseif metatable.type == 1 then
+                metatable.unlimited = 0
+            end
+            if metatable.type then
+                metatable.type = nil
+            end
+        end
+        meta:from_table(metatable)
 	end,
 })
 

@@ -1,17 +1,11 @@
-local shop_on_timer, wifi_on_timer
+local on_timer
 if smartshop.settings.has_mesecon then
-    function shop_on_timer(pos, elapsed)
-        mesecon.receptor_off(pos)
-        return false
-    end
-
-    function wifi_on_timer(pos, elapsed)
+    function on_timer(pos, elapsed)
         mesecon.receptor_off(pos)
         return false
     end
 else
-    function shop_on_timer() return false end
-    function wifi_on_timer(pos, elapsed) return false end
+    function on_timer() return false end
 end
 
 local function shop_tube_insert(pos, node, stack, direction)
@@ -26,33 +20,23 @@ local function wifi_tube_insert(pos, node, stack, direction)
     local meta  = minetest.get_meta(pos)
     local inv   = meta:get_inventory()
     local added = inv:add_item("main", stack)
-    smartshop.update_shop_color(pos)
     return added
 end
 
-local function shop_tube_can_insert(pos, node, stack, direction)
-    local meta = minetest.get_meta(pos)
-    local inv  = meta:get_inventory()
-    return inv:room_for_item("main", stack)
-end
-
-local function wifi_tube_can_insert(pos, node, stack, direction)
+local function tube_can_insert(pos, node, stack, direction)
     local meta = minetest.get_meta(pos)
     local inv  = meta:get_inventory()
     return inv:room_for_item("main", stack)
 end
 
 local function shop_after_place_node(pos, placer)
-    local meta = minetest.get_meta(pos)
-    meta:set_string("owner", placer:get_player_name())
-    meta:set_string("infotext", "Shop by: " .. placer:get_player_name())
-    meta:set_int("type", 1)
-    meta:set_int("sellall", 1)
-    if smartshop.util.player_is_creative(placer:get_player_name()) then
-        meta:set_int("creative", 1)
-        meta:set_int("type", 0)
-        meta:set_int("sellall", 0)
-    end
+    local meta        = minetest.get_meta(pos)
+    local player_name = placer:get_player_name()
+    local is_creative = smartshop.util.player_is_creative(player_name) and 1 or 0
+    meta:set_string("owner", player_name)
+    meta:set_string("infotext", "Shop by: " .. player_name)
+    meta:set_int("unlimited", is_creative)
+    meta:set_int("creative", is_creative)
 end
 
 local function wifi_after_place_node(pos, placer)
@@ -64,7 +48,7 @@ end
 
 local function shop_on_construct(pos)
     local meta = minetest.get_meta(pos)
-    meta:set_int("state", 0)
+    meta:set_int("state", 0) -- mesecons?
     local inv = meta:get_inventory()
     inv:set_size("main", 32)
     inv:set_size("give1", 1)
@@ -81,7 +65,7 @@ local function wifi_on_construct(pos)
     local meta = minetest.get_meta(pos)
     meta:get_inventory():set_size("main", 60)
     meta:set_int("mesein", 0)
-    meta:set_string("title", "wifi" .. math.random(1, 999))
+    meta:set_string("title", "wifi " .. minetest.pos_to_string(pos))
 end
 
 local function shop_on_rightclick(pos, node, player, itemstack, pointed_thing)
@@ -92,65 +76,53 @@ local function wifi_on_rightclick(pos, node, player, itemstack, pointed_thing)
     smartshop.wifi_showform(pos, player)
 end
 
-local function shop_allow_put(pos, listname, index, stack, player)
-    if stack:get_wear() == 0 and smartshop.util.can_access(player, pos) then
+local function allow_metadata_inventory_put(pos, listname, index, stack, player)
+    if stack:get_wear() ~= 0 or not smartshop.util.can_access(player, pos) then
+        return 0
+    elseif listname == "main" then
         return stack:get_count()
+    else
+        local inv = minetest.get_meta(pos):get_inventory()
+        inv:set_stack(listname, index, stack)
+        return 0
     end
-    return 0
 end
 
-local function wifi_allow_put(pos, listname, index, stack, player)
-    if stack:get_wear() == 0 and smartshop.util.can_access(player, pos) then
+local function allow_metadata_inventory_take(pos, listname, index, stack, player)
+    if not smartshop.util.can_access(player, pos) then
+        return 0
+    elseif listname == "main" then
         return stack:get_count()
+    else
+        local inv = minetest.get_meta(pos):get_inventory()
+        inv:set_stack(listname, index, ItemStack(""))
+        return 0
     end
-    return 0
 end
 
-local function shop_allow_take(pos, listname, index, stack, player)
-    if smartshop.util.can_access(player, pos) then
-        return stack:get_count()
-    end
-    return 0
-end
-
-local function wifi_allow_take(pos, listname, index, stack, player)
-    if smartshop.util.can_access(player, pos) then
-        return stack:get_count()
-    end
-    return 0
-end
-
-local function shop_allow_move(pos, from_list, from_index, to_list, to_index, count, player)
-    if smartshop.util.can_access(player, pos) then
+local function allow_metadata_inventory_move(pos, from_list, from_index, to_list, to_index, count, player)
+    if not smartshop.util.can_access(player, pos) then
+        return 0
+    elseif from_list == "main" and to_list == "main" then
+        return count
+    elseif from_list == "main" then
+        local inv   = minetest.get_meta(pos):get_inventory()
+        local stack = inv:get_stack(from_list, from_index)
+        return allow_metadata_inventory_put(pos, to_list, to_index, stack, player)
+    elseif to_list == "main" then
+        local inv   = minetest.get_meta(pos):get_inventory()
+        local stack = inv:get_stack(to_list, to_index)
+        return allow_metadata_inventory_take(pos, from_list, from_index, stack, player)
+    else
         return count
     end
-    return 0
 end
 
-local function shop_can_dig(pos, player)
+local function can_dig(pos, player)
     local meta = minetest.get_meta(pos)
     local inv  = meta:get_inventory()
-    local invs_are_empty = (
-        inv:is_empty("main") and
-        inv:is_empty("pay1") and
-        inv:is_empty("pay2") and
-        inv:is_empty("pay3") and
-        inv:is_empty("pay4") and
-        inv:is_empty("give1") and
-        inv:is_empty("give2") and
-        inv:is_empty("give3") and
-        inv:is_empty("give4")
-    )
-    if (meta:get_string("owner") == "" or smartshop.util.can_access(player, pos)) and invs_are_empty then
+    if (meta:get_string("owner") == "" or smartshop.util.can_access(player, pos)) and inv:is_empty("main") then
         smartshop.clear_shop_display(pos)
-        return true
-    end
-end
-
-local function wifi_can_dig(pos, player)
-    local meta = minetest.get_meta(pos)
-    local inv  = meta:get_inventory()
-    if (meta:get_string("owner") == "" or smartshop.util.can_access(player, pos)) and inv:is_empty("main")  then
         return true
     end
 end
@@ -170,9 +142,9 @@ local smartshop_def = {
     paramtype                     = "light",
     sunlight_propagates           = true,
     light_source                  = 10,
-    on_timer                      = shop_on_timer,
+    on_timer                      = on_timer,
     tube                          = { insert_object   = shop_tube_insert,
-                                      can_insert      = shop_tube_can_insert,
+                                      can_insert      = tube_can_insert,
                                       input_inventory = "main",
                                       connect_sides   = { left = 1,
                                                           right = 1,
@@ -183,10 +155,10 @@ local smartshop_def = {
     after_place_node              = shop_after_place_node,
     on_construct                  = shop_on_construct,
     on_rightclick                 = shop_on_rightclick,
-    allow_metadata_inventory_put  = shop_allow_put,
-    allow_metadata_inventory_take = shop_allow_take,
-    allow_metadata_inventory_move = shop_allow_move,
-    can_dig                       = shop_can_dig,
+    allow_metadata_inventory_put  = allow_metadata_inventory_put,
+    allow_metadata_inventory_take = allow_metadata_inventory_take,
+    allow_metadata_inventory_move = allow_metadata_inventory_move,
+    can_dig                       = can_dig,
 }
 
 local smartshop_full_def = smartshop.util.deepcopy(smartshop_def)
@@ -194,40 +166,20 @@ smartshop_full_def.drop = "smartshop:shop"
 smartshop_full_def.tiles = { "default_chest_top.png^[colorize:#0000FF77^default_obsidian_glass.png" }
 smartshop_full_def.groups.not_in_creative_inventory = 1
 
-local smartshop_empty_def = smartshop.util.deepcopy(smartshop_def)
-smartshop_empty_def.drop = "smartshop:shop"
+local smartshop_empty_def = smartshop.util.deepcopy(smartshop_full_def)
 smartshop_empty_def.tiles = { "default_chest_top.png^[colorize:#FF000077^default_obsidian_glass.png" }
-smartshop_empty_def.groups.not_in_creative_inventory = 1
 
-local smartshop_used_def = smartshop.util.deepcopy(smartshop_def)
-smartshop_used_def.drop = "smartshop:shop"
+local smartshop_used_def = smartshop.util.deepcopy(smartshop_full_def)
 smartshop_used_def.tiles = { "default_chest_top.png^[colorize:#00FF0077^default_obsidian_glass.png" }
-smartshop_used_def.groups.not_in_creative_inventory = 1
+
+local smartshop_admin_def = smartshop.util.deepcopy(smartshop_full_def)
+smartshop_admin_def.tiles = { "default_chest_top.png^[colorize:#00FFFF77^default_obsidian_glass.png" }
 
 minetest.register_node("smartshop:shop", smartshop_def)
 minetest.register_node("smartshop:shop_full", smartshop_full_def)
 minetest.register_node("smartshop:shop_empty", smartshop_empty_def)
 minetest.register_node("smartshop:shop_used", smartshop_used_def)
-
-minetest.register_node("smartshop:wifistorage", {
-    description                   = "Wifi storage",
-    tiles                         = { "default_chest_top.png^[colorize:#ffffff77^default_obsidian_glass.png" },
-    groups                        = { choppy = 2, oddly_breakable_by_hand = 1, tubedevice = 1, tubedevice_receiver = 1, mesecon = 2 },
-    paramtype                     = "light",
-    sunlight_propagates           = true,
-    light_source                  = 10,
-    on_timer                      = wifi_on_timer,
-    tube                          = { insert_object   = wifi_tube_insert,
-                                      can_insert      = wifi_tube_can_insert,
-                                      input_inventory = "main",
-                                      connect_sides   = { left = 1, right = 1, front = 1, back = 1, top = 1, bottom = 1 } },
-    after_place_node              = wifi_after_place_node,
-    on_construct                  = wifi_on_construct,
-    on_rightclick                 = wifi_on_rightclick,
-    allow_metadata_inventory_put  = wifi_allow_put,
-    allow_metadata_inventory_take = wifi_allow_take,
-    can_dig                       = wifi_can_dig,
-})
+minetest.register_node("smartshop:shop_admin", smartshop_admin_def)
 
 local function exchange_status(inv, slot)
     local pay_key = "pay"..slot
@@ -261,12 +213,14 @@ function smartshop.update_shop_color(pos)
         cur_name ~= "smartshop:shop" and
         cur_name ~= "smartshop:shop_full" and
         cur_name ~= "smartshop:shop_empty" and
-        cur_name ~= "smartshop:shop_used"
+        cur_name ~= "smartshop:shop_used" and
+        cur_name ~= "smartshop:shop_admin"
     ) then
         return
     end
     local meta = minetest.get_meta(pos)
     local inv  = meta:get_inventory()
+    local is_unlimited = meta:get_int("unlimited") == 1
 
     local total = 4
     local full_count = 0
@@ -287,8 +241,10 @@ function smartshop.update_shop_color(pos)
     end
 
     local to_swap
-    if total == 0 then
-        to_swap = "smartshop:shop"
+    if is_unlimited then
+        to_swap = "smartshop:shop_admin"
+    elseif total == 0 then
+        to_swap = "smartshop:shop_empty"
     elseif full_count == total then
         to_swap = "smartshop:shop_full"
     elseif empty_count == total then
@@ -306,3 +262,25 @@ function smartshop.update_shop_color(pos)
         })
     end
 end
+
+
+minetest.register_node("smartshop:wifistorage", {
+    description                   = "Wifi storage",
+    tiles                         = { "default_chest_top.png^[colorize:#ffffff77^default_obsidian_glass.png" },
+    groups                        = { choppy = 2, oddly_breakable_by_hand = 1, tubedevice = 1, tubedevice_receiver = 1, mesecon = 2 },
+    paramtype                     = "light",
+    sunlight_propagates           = true,
+    light_source                  = 10,
+    on_timer                      = on_timer,
+    tube                          = { insert_object   = wifi_tube_insert,
+                                      can_insert      = tube_can_insert,
+                                      input_inventory = "main",
+                                      connect_sides   = { left = 1, right = 1, front = 1, back = 1, top = 1, bottom = 1 } },
+    after_place_node              = wifi_after_place_node,
+    on_construct                  = wifi_on_construct,
+    on_rightclick                 = wifi_on_rightclick,
+    allow_metadata_inventory_put  = allow_metadata_inventory_put,
+    allow_metadata_inventory_take = allow_metadata_inventory_take,
+    allow_metadata_inventory_move = allow_metadata_inventory_move,
+    can_dig                       = can_dig,
+})
