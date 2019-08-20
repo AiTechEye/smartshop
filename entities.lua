@@ -50,19 +50,19 @@ minetest.register_entity("smartshop:item", {
                     (not def.drawtype or def.drawtype == "normal" or def.drawtype == "allfaces" or def.drawtype == "allfaces_optional" or def.drawtype == "glasslike" or def.drawtype == "glasslike_framed" or def.drawtype == "glasslike_framed_optional" or def.drawtype == "liquid")
                 ) then
                     if type(def.tiles[1]) == "string" then
-                        if #def.tiles == 6 then
+                        if #def.tiles == 6 and def.tiles[1] and def.tiles[3] and def.tiles[5] then
                             image = minetest.inventorycube(def.tiles[1], def.tiles[3], def.tiles[5])
-                        elseif #def.tiles == 3 then
+                        elseif #def.tiles == 3 and def.tiles[1] and def.tiles[3] then
                             image = minetest.inventorycube(def.tiles[1], def.tiles[3], def.tiles[3])
-                        else
+                        elseif def.tiles[1] then
                             image = minetest.inventorycube(def.tiles[1], def.tiles[1], def.tiles[1])
                         end
                     elseif type(def.tiles[1]) == "table" then
-                        if #def.tiles == 6 and def.tiles[1].name and def.tiles[3].name and def.tiles[5].name then
+                        if #def.tiles == 6 and def.tiles[1] and def.tiles[3] and def.tiles[5] and def.tiles[1].name and def.tiles[3].name and def.tiles[5].name then
                             image = minetest.inventorycube(def.tiles[1].name, def.tiles[3].name, def.tiles[5].name)
-                        elseif #def.tiles == 3 and def.tiles[1].name and def.tiles[3].name then
+                        elseif #def.tiles == 3 and def.tiles[1] and def.tiles[3] and def.tiles[1].name and def.tiles[3].name then
                             image = minetest.inventorycube(def.tiles[1].name, def.tiles[3].name, def.tiles[3].name)
-                        elseif #def.tiles == 3 and def.tiles[1].name then
+                        elseif def.tiles[1] and def.tiles[1].name then
                             image = minetest.inventorycube(def.tiles[1].name, def.tiles[1].name, def.tiles[1].name)
                         end
                     end
@@ -74,6 +74,14 @@ minetest.register_entity("smartshop:item", {
 
         if type(image) == "table" then
             image = image.name
+        end
+
+        if not image and not cache[self.item] then
+            minetest.log('warning', ('[smartshop] definition for %s'):format(self.item))
+            for key, value in pairs(def) do
+                minetest.log('warning', ('[smartshop]     %q = %q'):format(key, minetest.serialize(value)))
+            end
+            cache[self.item] = true
         end
 
         self.object:set_properties({ textures = { image } })
