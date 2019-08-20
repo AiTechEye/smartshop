@@ -50,19 +50,19 @@ minetest.register_entity("smartshop:item", {
                     (not def.drawtype or def.drawtype == "normal" or def.drawtype == "allfaces" or def.drawtype == "allfaces_optional" or def.drawtype == "glasslike" or def.drawtype == "glasslike_framed" or def.drawtype == "glasslike_framed_optional" or def.drawtype == "liquid")
                 ) then
                     if type(def.tiles[1]) == "string" then
-                        if #def.tiles == 6 and def.tiles[1] and def.tiles[3] and def.tiles[5] then
+                        if #def.tiles == 6 and type(def.tiles[1]) == "string" and type(def.tiles[3]) == "string" and type(def.tiles[5]) == "string" then
                             image = minetest.inventorycube(def.tiles[1], def.tiles[3], def.tiles[5])
-                        elseif #def.tiles == 3 and def.tiles[1] and def.tiles[3] then
+                        elseif #def.tiles == 3 and type(def.tiles[1]) == "string" and type(def.tiles[3]) == "string" then
                             image = minetest.inventorycube(def.tiles[1], def.tiles[3], def.tiles[3])
-                        elseif def.tiles[1] then
+                        elseif type(def.tiles[1]) == "string" then
                             image = minetest.inventorycube(def.tiles[1], def.tiles[1], def.tiles[1])
                         end
                     elseif type(def.tiles[1]) == "table" then
-                        if #def.tiles == 6 and def.tiles[1] and def.tiles[3] and def.tiles[5] and def.tiles[1].name and def.tiles[3].name and def.tiles[5].name then
+                        if #def.tiles == 6 and type(def.tiles[1]) == "table" and type(def.tiles[1].name) == "string" and type(def.tiles[3]) == "table" and type(def.tiles[3].name) == "string" and type(def.tiles[5]) == "table" and type(def.tiles[5].name) == "string" then
                             image = minetest.inventorycube(def.tiles[1].name, def.tiles[3].name, def.tiles[5].name)
-                        elseif #def.tiles == 3 and def.tiles[1] and def.tiles[3] and def.tiles[1].name and def.tiles[3].name then
+                        elseif #def.tiles == 3 and type(def.tiles[1]) == "table" and type(def.tiles[1].name) == "string" and type(def.tiles[3]) == "table" and type(def.tiles[3].name) == "string" then
                             image = minetest.inventorycube(def.tiles[1].name, def.tiles[3].name, def.tiles[3].name)
-                        elseif def.tiles[1] and def.tiles[1].name then
+                        elseif type(def.tiles[1]) == "table" and type(def.tiles[1].name) == "string" then
                             image = minetest.inventorycube(def.tiles[1].name, def.tiles[1].name, def.tiles[1].name)
                         end
                     end
