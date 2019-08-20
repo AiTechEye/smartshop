@@ -120,9 +120,10 @@ end
 
 local function on_metadata_inventory_put(pos, listname, index, stack, player)
     if listname == "main" then
-        smartshop.log('action', '%s put %q in smartshop @ %s',
+        smartshop.log('action', '%s put %q in %s @ %s',
                       player:get_player_name(),
                       stack:to_string(),
+                      minetest.get_node(pos).name,
                       minetest.pos_to_string(pos)
         )
     end
@@ -130,9 +131,10 @@ end
 
 local function on_metadata_inventory_take(pos, listname, index, stack, player)
     if listname == "main" then
-        smartshop.log('action', '%s took %q from smartshop @ %s',
+        smartshop.log('action', '%s took %q from %s @ %s',
                       player:get_player_name(),
                       stack:to_string(),
+                      minetest.get_node(pos).name,
                       minetest.pos_to_string(pos)
         )
     end
@@ -287,7 +289,7 @@ end
 
 
 minetest.register_node("smartshop:wifistorage", {
-    description                   = "Wifi storage",
+    description                   = "Smartshop external storage",
     tiles                         = { "default_chest_top.png^[colorize:#ffffff77^default_obsidian_glass.png" },
     groups                        = { choppy = 2,
                                       oddly_breakable_by_hand = 1,
