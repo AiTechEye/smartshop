@@ -36,7 +36,7 @@ local function get_buy_n(pressed)
 	end
 end
 
-local function process_purchase(player_inv, shop_inv, pay_name, pay_stack, give_name, player_name, is_unlimited)
+local function process_purchase(player_inv, shop_inv, pay_name, pay_stack, give_name, player_name, is_unlimited, shop_owner, pos)
 	for i = 0, 32, 1 do
 		local player_inv_stack = player_inv:get_stack("main", i)
 		if player_inv_stack:get_name() == pay_stack:get_name() and player_inv_stack:get_wear() > 0 then
@@ -53,6 +53,8 @@ local function process_purchase(player_inv, shop_inv, pay_name, pay_stack, give_
 		player_inv:add_item("main", sold_thing)
 		shop_inv:add_item("main", payment)
 	end
+	local spos = minetest.pos_to_string(pos)
+	smartshop.log('action', '%s bought %q for %q from %s at %s', player_name, give_name, pay_name, shop_owner, spos)
 end
 
 local function transfer_wifi_storage(shop_meta, shop_inv, pay_name, get_name, exchange_possible, player_name)
@@ -117,6 +119,7 @@ local function buy_item_n(player, pos, n)
 	local get_name      = name .. " " .. get_stack:get_count()
 	local pay_stack     = shop_inv:get_stack("pay" .. n, 1)
 	local pay_name      = pay_stack:get_name() .. " " .. pay_stack:get_count()
+	local shop_owner    = meta:get_string("owner")
 
     local player_name   = player:get_player_name()
 	--fast checks
@@ -132,7 +135,7 @@ local function buy_item_n(player, pos, n)
 	end
 
 	if is_unlimited or shop_inv:contains_item("main", get_name) then
-		process_purchase(player_inv, shop_inv, pay_name, pay_stack, get_name, player_name, is_unlimited)
+		process_purchase(player_inv, shop_inv, pay_name, pay_stack, get_name, player_name, is_unlimited, shop_owner, pos)
 		smartshop.send_mesecon(pos)
 		exchange_possible = true
 	else
@@ -257,7 +260,7 @@ end
 function smartshop.shop_showform(pos, player, ignore_owner)
     local shop_meta   = minetest.get_meta(pos)
     local shop_inv    = shop_meta:get_inventory()
-    local spos        = pos.x .. "," .. pos.y .. "," .. pos.z
+    local fpos        = pos.x .. "," .. pos.y .. "," .. pos.z
     local player_name = player:get_player_name()
     local is_owner
 
@@ -279,9 +282,9 @@ function smartshop.shop_showform(pos, player, ignore_owner)
             is_creative = shop_meta:get_int("creative") == 1
         end
 
-        gui = get_shop_owner_gui(spos, shop_meta, is_creative)
+        gui = get_shop_owner_gui(fpos, shop_meta, is_creative)
     else
-        gui = get_shop_player_gui(spos, shop_inv)
+        gui = get_shop_player_gui(fpos, shop_inv)
     end
 
     smartshop.player_pos[player_name] = pos

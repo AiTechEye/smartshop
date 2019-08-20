@@ -118,6 +118,26 @@ local function allow_metadata_inventory_move(pos, from_list, from_index, to_list
     end
 end
 
+local function on_metadata_inventory_put(pos, listname, index, stack, player)
+    if listname == "main" then
+        smartshop.log('action', '%s put %q in smartshop @ %s',
+                      player:get_player_name(),
+                      stack:to_string(),
+                      minetest.pos_to_string(pos)
+        )
+    end
+end
+
+local function on_metadata_inventory_take(pos, listname, index, stack, player)
+    if listname == "main" then
+        smartshop.log('action', '%s took %q from smartshop @ %s',
+                      player:get_player_name(),
+                      stack:to_string(),
+                      minetest.pos_to_string(pos)
+        )
+    end
+end
+
 local function can_dig(pos, player)
     local meta = minetest.get_meta(pos)
     local inv  = meta:get_inventory()
@@ -158,6 +178,8 @@ local smartshop_def = {
     allow_metadata_inventory_put  = allow_metadata_inventory_put,
     allow_metadata_inventory_take = allow_metadata_inventory_take,
     allow_metadata_inventory_move = allow_metadata_inventory_move,
+    on_metadata_inventory_put     = on_metadata_inventory_put,
+    on_metadata_inventory_take    = on_metadata_inventory_take,
     can_dig                       = can_dig,
 }
 
@@ -267,7 +289,11 @@ end
 minetest.register_node("smartshop:wifistorage", {
     description                   = "Wifi storage",
     tiles                         = { "default_chest_top.png^[colorize:#ffffff77^default_obsidian_glass.png" },
-    groups                        = { choppy = 2, oddly_breakable_by_hand = 1, tubedevice = 1, tubedevice_receiver = 1, mesecon = 2 },
+    groups                        = { choppy = 2,
+                                      oddly_breakable_by_hand = 1,
+                                      tubedevice = 1,
+                                      tubedevice_receiver = 1,
+                                      mesecon = 2 },
     paramtype                     = "light",
     sunlight_propagates           = true,
     light_source                  = 10,
@@ -275,12 +301,19 @@ minetest.register_node("smartshop:wifistorage", {
     tube                          = { insert_object   = wifi_tube_insert,
                                       can_insert      = tube_can_insert,
                                       input_inventory = "main",
-                                      connect_sides   = { left = 1, right = 1, front = 1, back = 1, top = 1, bottom = 1 } },
+                                      connect_sides   = { left = 1,
+                                                          right = 1,
+                                                          front = 1,
+                                                          back = 1,
+                                                          top = 1,
+                                                          bottom = 1 } },
     after_place_node              = wifi_after_place_node,
     on_construct                  = wifi_on_construct,
     on_rightclick                 = wifi_on_rightclick,
     allow_metadata_inventory_put  = allow_metadata_inventory_put,
     allow_metadata_inventory_take = allow_metadata_inventory_take,
     allow_metadata_inventory_move = allow_metadata_inventory_move,
+    on_metadata_inventory_put     = on_metadata_inventory_put,
+    on_metadata_inventory_take    = on_metadata_inventory_take,
     can_dig                       = can_dig,
 })
