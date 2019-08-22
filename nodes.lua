@@ -30,21 +30,21 @@ local function tube_can_insert(pos, node, stack, direction)
 end
 
 local function shop_after_place_node(pos, placer)
-    local meta        = minetest.get_meta(pos)
+    local shop_meta   = minetest.get_meta(pos)
     local player_name = placer:get_player_name()
     local is_creative = smartshop.util.player_is_creative(player_name) and 1 or 0
-    meta:set_string("owner", player_name)
-    meta:set_string("infotext", "Shop by: " .. player_name)
-    meta:set_int("unlimited", is_creative)
-    meta:set_int("creative", is_creative)
+    smartshop.set_owner(shop_meta, player_name)
+    smartshop.set_infotext(shop_meta, ("Shop by: %s"):format(player_name))
+    smartshop.set_creative(shop_meta, is_creative)
+    smartshop.set_unlimited(shop_meta, is_creative)
     smartshop.update_shop_color(pos)
 end
 
 local function wifi_after_place_node(pos, placer)
-    local meta = minetest.get_meta(pos)
-    local name = placer:get_player_name()
-    meta:set_string("owner", name)
-    meta:set_string("infotext", "Wifi storage by: " .. name)
+    local wifi_meta   = minetest.get_meta(pos)
+    local player_name = placer:get_player_name()
+    smartshop.set_owner(wifi_meta, player_name)
+    smartshop.set_infotext(wifi_meta, ("External storage by: %s"):format(player_name))
 end
 
 local function shop_on_construct(pos)
@@ -63,10 +63,10 @@ local function shop_on_construct(pos)
 end
 
 local function wifi_on_construct(pos)
-    local meta = minetest.get_meta(pos)
-    meta:get_inventory():set_size("main", 60)
-    meta:set_int("mesein", 0)
-    meta:set_string("title", "wifi " .. minetest.pos_to_string(pos))
+    local wifi_meta = minetest.get_meta(pos)
+    wifi_meta:get_inventory():set_size("main", 60)
+    wifi_meta:set_int("mesein", 0)
+    smartshop.set_title(wifi_meta, "wifi " .. minetest.pos_to_string(pos))
 end
 
 local function shop_on_rightclick(pos, node, player, itemstack, pointed_thing)
@@ -144,7 +144,8 @@ end
 local function can_dig(pos, player)
     local meta = minetest.get_meta(pos)
     local inv  = meta:get_inventory()
-    if (meta:get_string("owner") == "" or smartshop.util.can_access(player, pos)) and inv:is_empty("main") then
+    local owner = smartshop.get_owner(meta)
+    if (owner == "" or smartshop.util.can_access(player, pos)) and inv:is_empty("main") then
         smartshop.clear_shop_display(pos)
         return true
     end
@@ -200,13 +201,95 @@ smartshop_used_def.tiles = { "default_chest_top.png^[colorize:#00FF0077^default_
 local smartshop_admin_def = smartshop.util.deepcopy(smartshop_full_def)
 smartshop_admin_def.tiles = { "default_chest_top.png^[colorize:#00FFFF77^default_obsidian_glass.png" }
 
+local function get_meta(pos_or_meta)
+    if type(pos_or_meta) == "userdata" then
+        return pos_or_meta
+    elseif type(pos_or_meta) == "table" and pos_or_meta.x and pos_or_meta.y and pos_or_meta.z then
+        return minetest.get_meta(pos_or_meta)
+    end
+end
+
+function smartshop.is_creative(pos_or_meta)
+    local meta = get_meta(pos_or_meta)
+    return meta:get_int("creative") == 1
+end
+
+function smartshop.set_creative(pos_or_meta, value)
+    local meta = get_meta(pos_or_meta)
+    meta:set_int("creative", value and 1 or 0)
+end
+
+function smartshop.is_unlimited(pos_or_meta)
+    local meta = get_meta(pos_or_meta)
+    return meta:get_int("unlimited") == 1
+end
+
+function smartshop.set_unlimited(pos_or_meta, value)
+    local meta = get_meta(pos_or_meta)
+    meta:set_int("unlimited", value and 1 or 0)
+end
+
+function smartshop.get_owner(pos_or_meta)
+    local meta = get_meta(pos_or_meta)
+    return meta:get_string("owner")
+end
+
+function smartshop.set_owner(pos_or_meta, value)
+    local meta = get_meta(pos_or_meta)
+    meta:set_string("owner", value)
+end
+
+function smartshop.get_infotext(pos_or_meta)
+    local meta = get_meta(pos_or_meta)
+    return meta:get_string("infotext")
+end
+
+function smartshop.set_infotext(pos_or_meta, value, ...)
+    local meta = get_meta(pos_or_meta)
+    value = value:format(...)
+    return meta:set_string("infotext", value)
+end
+
+function smartshop.get_send_spos(pos_or_meta)
+    local meta = get_meta(pos_or_meta)
+    return meta:get_string("item_send")
+end
+
+function smartshop.set_send_spos(pos_or_meta, value, ...)
+    local meta = get_meta(pos_or_meta)
+    value = value:format(...)
+    return meta:set_string("item_send", value)
+end
+
+function smartshop.get_refill_spos(pos_or_meta)
+    local meta = get_meta(pos_or_meta)
+    return meta:get_string("item_refill")
+end
+
+function smartshop.set_refill_spos(pos_or_meta, value, ...)
+    local meta = get_meta(pos_or_meta)
+    value = value:format(...)
+    return meta:set_string("item_refill", value)
+end
+
+function smartshop.get_title(pos_or_meta)
+    local meta = get_meta(pos_or_meta)
+    return meta:get_string("title")
+end
+
+function smartshop.set_title(pos_or_meta, value, ...)
+    local meta = get_meta(pos_or_meta)
+    value = value:format(...)
+    return meta:set_string("title", value)
+end
+
 minetest.register_node("smartshop:shop", smartshop_def)
 minetest.register_node("smartshop:shop_full", smartshop_full_def)
 minetest.register_node("smartshop:shop_empty", smartshop_empty_def)
 minetest.register_node("smartshop:shop_used", smartshop_used_def)
 minetest.register_node("smartshop:shop_admin", smartshop_admin_def)
 
-local function exchange_status(inv, slot)
+local function get_exchange_status(inv, slot)
     local pay_key = "pay"..slot
     local pay_stack = inv:get_stack(pay_key, 1)
     local give_key = "give"..slot
@@ -243,17 +326,17 @@ function smartshop.update_shop_color(pos)
     ) then
         return
     end
-    local meta = minetest.get_meta(pos)
-    local inv  = meta:get_inventory()
-    local is_unlimited = meta:get_int("unlimited") == 1
+    local shop_meta    = minetest.get_meta(pos)
+    local shop_inv     = shop_meta:get_inventory()
+    local is_unlimited = smartshop.is_unlimited(shop_meta)
 
-    local total = 4
-    local full_count = 0
-    local empty_count = 0
-    local used = false
+    local total        = 4
+    local full_count   = 0
+    local empty_count  = 0
+    local used         = false
 
     for slot = 1,4 do
-        local status = exchange_status(inv, slot)
+        local status = get_exchange_status(shop_inv, slot)
         if status == "full" then
             full_count = full_count + 1
         elseif status == "empty" then

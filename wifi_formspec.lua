@@ -1,27 +1,27 @@
 function smartshop.wifi_receive_fields(player, pressed)
     local player_name = player:get_player_name()
-    local pos         = smartshop.player_pos[player_name]
-    if not pos then return end
-    local meta = minetest.get_meta(pos)
+    local wifi_pos    = smartshop.player_pos[player_name]
+    if not wifi_pos then return end
+    local wifi_meta = minetest.get_meta(wifi_pos)
 
     if pressed.mesesin then
-        local m = meta:get_int("mesein")
+        local m = wifi_meta:get_int("mesein")
         if m <= 2 then
             m = m + 1
         else
             m = 0
         end
-        meta:set_int("mesein", m)
-        smartshop.wifi_showform(pos, player)
+        wifi_meta:set_int("mesein", m)
+        smartshop.wifi_showform(wifi_pos, player)
         return
     elseif pressed.save then
         local title = pressed.title
         if not title or title == "" then
-            title = "wifi " .. minetest.pos_to_string(pos)
+            title = "wifi " .. minetest.pos_to_string(wifi_pos)
         end
-        meta:set_string("title", title)
-        local spos = minetest.pos_to_string(pos)
-        smartshop.log('action', '%s set title of wifi storage at %s to %s', player_name, spos, title)
+        smartshop.set_title(wifi_meta, title)
+        local wifi_spos = minetest.pos_to_string(wifi_pos)
+        smartshop.log('action', '%s set title of wifi storage at %s to %s', player_name, wifi_spos, title)
     end
     smartshop.player_pos[player_name] = nil
 end
@@ -32,7 +32,7 @@ function smartshop.wifi_showform(pos, player)
     local player_name = player:get_player_name()
     local spos        = minetest.pos_to_string(pos)
     local fpos        = pos.x .. "," .. pos.y .. "," .. pos.z
-    local title       = meta:get_string("title")
+    local title       = smartshop.get_title(meta)
     if not title or title == "" then
         title = "wifi " .. spos
     end
@@ -76,9 +76,9 @@ function smartshop.wifi_showform(pos, player)
         local shop_spos = minetest.pos_to_string(pos)
         if shop_spos then
             if shop_info.send then
-                shop_meta:set_string("item_send", shop_spos)
+                smartshop.set_send_spos(shop_meta, shop_spos)
             elseif shop_info.refill then
-                shop_meta:set_string("item_refill", shop_spos)
+                smartshop.set_refill_spos(shop_meta, shop_spos)
             end
         end
         minetest.chat_send_player(player_name, "smartshop connected")

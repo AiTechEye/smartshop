@@ -19,12 +19,12 @@ end
 
 local function toggle_limit(player, pos)
 	local meta  = minetest.get_meta(pos)
-	if meta:get_int("unlimited") == 0 then
-		meta:set_int("unlimited", 1)
-		meta:set_string("item_send", "")
-		meta:set_string("item_refill", "")
+	if smartshop.is_unlimited(meta) then
+		smartshop.set_unlimited(meta, false)
 	else
-		meta:set_int("unlimited", 0)
+		smartshop.set_unlimited(meta, true)
+		smartshop.set_send_spos(meta, "")
+		smartshop.set_refill_spos(meta, "")
 	end
 	smartshop.update_shop_color(pos)
 	smartshop.shop_showform(pos, player)
@@ -58,16 +58,17 @@ local function process_purchase(player_inv, shop_inv, pay_name, pay_stack, give_
 end
 
 local function transfer_wifi_storage(shop_meta, shop_inv, pay_name, get_name, exchange_possible, player_name)
-	local tsend   = smartshop.util.string_to_pos(shop_meta:get_string("item_send"))
-	if tsend then
-		local wifi_meta = minetest.get_meta(tsend)
+	local send_spos = smartshop.get_send_spos(shop_meta)
+	local send_pos  = smartshop.util.string_to_pos(send_spos)
+	if send_pos then
+		local wifi_meta = minetest.get_meta(send_pos)
 		local wifi_inv  = wifi_meta:get_inventory()
 		local mes       = wifi_meta:get_int("mesein")
 		for i = 1, 10 do
 			if wifi_inv:room_for_item("main", pay_name) and shop_inv:contains_item("main", pay_name) then
 				wifi_inv:add_item("main", shop_inv:remove_item("main", pay_name))
 				if mes == 1 or mes == 3 then
-					smartshop.send_mesecon(tsend)
+					smartshop.send_mesecon(send_pos)
 				end
 			else
 				break
@@ -75,9 +76,10 @@ local function transfer_wifi_storage(shop_meta, shop_inv, pay_name, get_name, ex
 		end
 	end
 
-	local trefill = smartshop.util.string_to_pos(shop_meta:get_string("item_refill"))
-	if trefill then
-		local wifi_meta = minetest.get_meta(trefill)
+	local refill_spos = smartshop.get_refill_spos(shop_meta)
+	local refill_pos  = smartshop.util.string_to_pos(refill_spos)
+	if refill_pos then
+		local wifi_meta = minetest.get_meta(refill_pos)
 		local wifi_inv  = wifi_meta:get_inventory()
 		local mes       = wifi_meta:get_int("mesein")
 		local stuff_was_moved = false
@@ -94,7 +96,7 @@ local function transfer_wifi_storage(shop_meta, shop_inv, pay_name, get_name, ex
 				shop_inv:add_item("main", rstack)
 				stuff_was_moved = true
 				if mes == 2 or mes == 3 then
-					smartshop.send_mesecon(trefill)
+					smartshop.send_mesecon(refill_pos)
 				end
 			else
 				break
@@ -114,12 +116,12 @@ local function buy_item_n(player, pos, n)
 	if name == "" then return end
 
 	local exchange_possible
-	local is_unlimited  = meta:get_int("unlimited") == 1
+	local is_unlimited  = smartshop.is_unlimited(meta)
 	local player_inv    = player:get_inventory()
 	local get_name      = name .. " " .. get_stack:get_count()
 	local pay_stack     = shop_inv:get_stack("pay" .. n, 1)
 	local pay_name      = pay_stack:get_name() .. " " .. pay_stack:get_count()
-	local shop_owner    = meta:get_string("owner")
+	local shop_owner    = smartshop.get_owner(meta)
 
     local player_name   = player:get_player_name()
 	--fast checks
@@ -149,7 +151,7 @@ local function buy_item_n(player, pos, n)
 end
 
 local function get_shop_owner_gui(spos, shop_meta, is_creative)
-    local gui = "size[8,10]"
+    local gui          = "size[8,10]"
              .. "button_exit[6,0;1.5,1;customer;Customer]"
              .. "label[0,0.2;Item:]"
              .. "label[0,1.2;Price:]"
@@ -161,35 +163,38 @@ local function get_shop_owner_gui(spos, shop_meta, is_creative)
              .. "list[nodemeta:" .. spos .. ";pay3;3,1;1,1;]"
              .. "list[nodemeta:" .. spos .. ";give4;4,0;1,1;]"
              .. "list[nodemeta:" .. spos .. ";pay4;4,1;1,1;]"
-
-    local tsend   = smartshop.util.string_to_pos(shop_meta:get_string("item_send"))
-    local trefill = smartshop.util.string_to_pos(shop_meta:get_string("item_refill"))
-	local is_unlimited = shop_meta:get_int("unlimited") == 1
+	local send_spos    = smartshop.get_send_spos(shop_meta)
+    local send_pos     = smartshop.util.string_to_pos(send_spos)
+	local refill_spos  = smartshop.get_refill_spos(shop_meta)
+    local refill_pos   = smartshop.util.string_to_pos(refill_spos)
+	local is_unlimited = smartshop.is_unlimited(shop_meta)
+	local shop_owner   = smartshop.get_owner(shop_meta)
 
 	if not is_unlimited then
 		gui = gui .. "button_exit[5,0;1,1;tsend;Send]"
                   .. "button_exit[5,1;1,1;trefill;Refill]"
 	end
 
-    if tsend then
-        local m     = minetest.get_meta(tsend)
-        local title = m:get_string("title")
-        if title == "" or m:get_string("owner") ~= shop_meta:get_string("owner") then
-            shop_meta:set_string("item_send", "")
+    if send_pos then
+        local wifi_meta = minetest.get_meta(send_pos)
+        local title     = smartshop.get_title(wifi_meta)
+		local wifi_owner = smartshop.get_owner(wifi_meta)
+        if title == "" or wifi_owner ~= shop_owner then
+            smartshop.set_send_spos(shop_meta, "")
             title = "error"
         end
 		title = minetest.formspec_escape(title)
         gui = gui .. "tooltip[tsend;Payments sent to " .. title .. "]"
     else
         gui = gui .. "tooltip[tsend;No send wifi configured]"
-
     end
 
-    if trefill then
-        local m     = minetest.get_meta(trefill)
-        local title = m:get_string("title")
-        if title == "" or m:get_string("owner") ~= shop_meta:get_string("owner") then
-            shop_meta:set_string("item_refill", "")
+    if refill_pos then
+        local wifi_meta = minetest.get_meta(refill_pos)
+        local title     = smartshop.get_title(wifi_meta)
+		local wifi_owner = smartshop.get_owner(wifi_meta)
+        if title == "" or wifi_owner ~= shop_owner then
+			smartshop.set_refill_spos(shop_meta, "")
             title = "error"
         end
 		title = minetest.formspec_escape(title)
@@ -272,14 +277,12 @@ function smartshop.shop_showform(pos, player, ignore_owner)
 
     local gui
     if is_owner then
-        -- if a shop is unlimited, but the player no longer has creative privs, revert the shop
-        local is_creative
-        if shop_meta:get_int("unlimited") == 1 and not smartshop.util.player_is_creative(player_name) then
-            shop_meta:set_int("creative", 0)
-            shop_meta:set_int("unlimited", 0)
+        -- if a shop is creative, but the player no longer has creative privs, revert the shop
+        local is_creative = smartshop.is_creative(shop_meta)
+        if is_creative and not smartshop.util.player_is_creative(player_name) then
+			smartshop.set_creative(shop_meta, false)
+			smartshop.set_unlimited(shop_meta, false)
             is_creative = false
-        else
-            is_creative = shop_meta:get_int("creative") == 1
         end
 
         gui = get_shop_owner_gui(fpos, shop_meta, is_creative)

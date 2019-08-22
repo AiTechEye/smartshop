@@ -19,10 +19,10 @@ local entities_by_pos = {}
 function smartshop.update_shop_info(pos)
     local shop_meta = minetest.get_meta(pos)
     local shop_inv  = shop_meta:get_inventory()
-    local owner     = shop_meta:get_string("owner")
+    local owner     = smartshop.get_owner(shop_meta)
 
-	if shop_meta:get_int("unlimited") == 1 then
-        shop_meta:set_string("infotext", "(Smartshop by " .. owner .. ") Stock is unlimited")
+	if smartshop.is_unlimited(shop_meta) then
+        smartshop.set_infotext(shop_meta, "(Smartshop by %s) Stock is unlimited", owner)
         return
     end
 
@@ -35,7 +35,7 @@ function smartshop.update_shop_info(pos)
 		end
 	end
 
-	local lines = {"(Smartshop by " .. owner .. ") Purchases left:"}
+	local lines = {("(Smartshop by %s) Purchases left:"):format(owner)}
     for i = 1, 4, 1 do
 		local give_stack = shop_inv:get_stack("give" .. i, 1)
 		if not give_stack:is_empty() and give_stack:is_known() and give_stack:get_wear() == 0 then
@@ -53,9 +53,9 @@ function smartshop.update_shop_info(pos)
     end
 
     if #lines == 1 then
-        shop_meta:set_string("infotext", "(Smartshop by " .. owner .. ")\nThis shop is empty.")
+        smartshop.set_infotext(shop_meta, "(Smartshop by %s)\nThis shop is empty.", owner)
     else
-        shop_meta:set_string("infotext", table.concat(lines, "\n"))
+        smartshop.set_infotext(shop_meta, table.concat(lines, "\n"))
     end
 end
 
@@ -150,7 +150,7 @@ minetest.register_lbm({
         smartshop.update_shop_color(pos)
         local meta = minetest.get_meta(pos)
         local metatable = meta:to_table() or {}
-        if meta.creative == 1 then
+        if metatable.creative == 1 then
             if metatable.type == 0 then
                 metatable.unlimited = 1
                 metatable.item_send = nil
@@ -164,6 +164,33 @@ minetest.register_lbm({
         end
         meta:from_table(metatable)
 	end,
+})
+
+minetest.register_lbm({
+      name              = "smartshop:repay_lost_stuff",
+      nodenames         = {
+          "smartshop:shop",
+          "smartshop:shop_empty",
+          "smartshop:shop_full",
+          "smartshop:shop_used",
+      },
+      run_at_every_load = false,
+      action            = function(pos, node)
+          -- recoup lost inventory items if possible
+          local meta = minetest.get_meta(pos)
+          if smartshop.is_creative(meta) then return end
+          local inv = meta:get_inventory()
+          for index = 1, 4 do
+              local pay_stack = inv:get_stack('pay' .. index, 1)
+              if not pay_stack:is_empty() and inv:room_for_item("main", pay_stack) then
+                  inv:add_item("main", pay_stack)
+              end
+              local give_stack = inv:get_stack('give' .. index, 1)
+              if give_stack:is_empty() and inv:room_for_item("main", give_stack) then
+                  inv:add_item("main", give_stack)
+              end
+          end
+      end,
 })
 
 minetest.register_on_shutdown(function()
