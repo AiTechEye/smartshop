@@ -11,3 +11,6 @@
 11) Update README
 12) log purchases
 13) fix display of certain items in shops
+    [x] fix display of nodes w/ complicated tiles
+    [ ] re-add the wield_item entity for mesh and nodebox nodes
+    [ ] add a new entity that is a composite of the 4 small entities

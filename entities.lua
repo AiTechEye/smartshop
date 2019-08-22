@@ -63,13 +63,13 @@ local function get_image(item)
 
     local image
     local tiles = def.tiles or def.tile_images
-    if def.inventory_image and def.inventory_image ~= '' then
+    if def.inventory_image and def.inventory_image ~= "" then
         image = def.inventory_image
     elseif tiles then
         local tiles = def.tiles or def.tile_images
-        if type(tiles) == 'string' then
+        if type(tiles) == "string" then
             image = tiles
-        elseif type(tiles) == 'table' then
+        elseif type(tiles) == "table" then
             if (
                 (not def.type or def.type == "node") and
                 (not def.drawtype or
@@ -89,9 +89,9 @@ local function get_image(item)
     end
 
     if (debug or not image or image == "unknown_node.png") and not cache[item] then
-        smartshop.log('warning', '[smartshop] definition for %s', item)
+        smartshop.log("warning", "[smartshop] definition for %s", item)
         for key, value in pairs(def) do
-            smartshop.log('warning', '[smartshop]     %q = %q', key, minetest.serialize(value))
+            smartshop.log("warning", "[smartshop]     %q = %q", key, minetest.serialize(value))
         end
         cache[item] = true
     end

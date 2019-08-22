@@ -181,11 +181,11 @@ minetest.register_lbm({
           if smartshop.is_creative(meta) then return end
           local inv = meta:get_inventory()
           for index = 1, 4 do
-              local pay_stack = inv:get_stack('pay' .. index, 1)
+              local pay_stack = inv:get_stack("pay" .. index, 1)
               if not pay_stack:is_empty() and inv:room_for_item("main", pay_stack) then
                   inv:add_item("main", pay_stack)
               end
-              local give_stack = inv:get_stack('give' .. index, 1)
+              local give_stack = inv:get_stack("give" .. index, 1)
               if give_stack:is_empty() and inv:room_for_item("main", give_stack) then
                   inv:add_item("main", give_stack)
               end

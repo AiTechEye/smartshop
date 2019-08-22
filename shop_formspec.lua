@@ -54,7 +54,7 @@ local function process_purchase(player_inv, shop_inv, pay_name, pay_stack, give_
 		shop_inv:add_item("main", payment)
 	end
 	local spos = minetest.pos_to_string(pos)
-	smartshop.log('action', '%s bought %q for %q from %s at %s', player_name, give_name, pay_name, shop_owner, spos)
+	smartshop.log("action", "%s bought %q for %q from %s at %s", player_name, give_name, pay_name, shop_owner, spos)
 end
 
 local function transfer_wifi_storage(shop_meta, shop_inv, pay_name, get_name, exchange_possible, player_name)

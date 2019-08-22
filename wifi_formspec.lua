@@ -21,7 +21,7 @@ function smartshop.wifi_receive_fields(player, pressed)
         end
         smartshop.set_title(wifi_meta, title)
         local wifi_spos = minetest.pos_to_string(wifi_pos)
-        smartshop.log('action', '%s set title of wifi storage at %s to %s', player_name, wifi_spos, title)
+        smartshop.log("action", "%s set title of wifi storage at %s to %s", player_name, wifi_spos, title)
     end
     smartshop.player_pos[player_name] = nil
 end

@@ -1,11 +1,11 @@
 smartshop.util = {}
 
 function smartshop.util.string_to_pos(spos)
-    -- can't just use minetest.string_to_pos for sake of backward compatibility
+    -- can't just use minetest.string_to_pos, for sake of backward compatibility
     if not spos or type(spos) ~= "string" then return nil end
-    local x, y, z = spos:match('^%s*%(%s*(%d+)[%s,]+(%d+)[%s,]+(%d+)%s*%)%s*$')
+    local x, y, z = spos:match("^%s*%(%s*(%d+)[%s,]+(%d+)[%s,]+(%d+)%s*%)%s*$")
     if x and y and z then
-        return {x=tonumber(x), y=tonumber(y), z=tonumber(z)}
+        return vector.new(tonumber(x), tonumber(y), tonumber(z))
     end
 end
 
@@ -32,7 +32,7 @@ function smartshop.util.deepcopy(orig, copies)
     copies = copies or {}
     local orig_type = type(orig)
     local copy
-    if orig_type == 'table' then
+    if orig_type == "table" then
         if copies[orig] then
             copy = copies[orig]
         else
