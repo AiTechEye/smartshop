@@ -24,7 +24,7 @@ dofile(smartshop.modpath .. "/nodes.lua")
 dofile(smartshop.modpath .. "/crafting.lua")
 dofile(smartshop.modpath .. "/entities.lua")
 
-dofile(smartshop.modpath .. "/currency.lua")
+--dofile(smartshop.modpath .. "/currency.lua")
 dofile(smartshop.modpath .. "/mesecons.lua")
 
 minetest.register_on_player_receive_fields(function(player, form, pressed)

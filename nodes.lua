@@ -153,7 +153,7 @@ end
 
 local smartshop_def = {
     description                   = "Smartshop",
-    tiles                         = { "default_chest_top.png^[colorize:#ffffff77^default_obsidian_glass.png" },
+    tiles                         = { "(default_chest_top.png^[colorize:#FFFFFF77)^default_obsidian_glass.png" },
     groups                        = { choppy = 2,
                                       oddly_breakable_by_hand = 1,
                                       tubedevice = 1,
@@ -189,17 +189,17 @@ local smartshop_def = {
 
 local smartshop_full_def = smartshop.util.deepcopy(smartshop_def)
 smartshop_full_def.drop = "smartshop:shop"
-smartshop_full_def.tiles = { "default_chest_top.png^[colorize:#0000FF77^default_obsidian_glass.png" }
+smartshop_full_def.tiles = { "(default_chest_top.png^[colorize:#FFFFFF77)^(default_obsidian_glass.png^[colorize:#0000FF77)" }
 smartshop_full_def.groups.not_in_creative_inventory = 1
 
 local smartshop_empty_def = smartshop.util.deepcopy(smartshop_full_def)
-smartshop_empty_def.tiles = { "default_chest_top.png^[colorize:#FF000077^default_obsidian_glass.png" }
+smartshop_empty_def.tiles = { "(default_chest_top.png^[colorize:#FFFFFF77)^(default_obsidian_glass.png^[colorize:#FF000077)" }
 
 local smartshop_used_def = smartshop.util.deepcopy(smartshop_full_def)
-smartshop_used_def.tiles = { "default_chest_top.png^[colorize:#00FF0077^default_obsidian_glass.png" }
+smartshop_used_def.tiles = { "(default_chest_top.png^[colorize:#FFFFFF77)^(default_obsidian_glass.png^[colorize:#00FF0077)" }
 
 local smartshop_admin_def = smartshop.util.deepcopy(smartshop_full_def)
-smartshop_admin_def.tiles = { "default_chest_top.png^[colorize:#00FFFF77^default_obsidian_glass.png" }
+smartshop_admin_def.tiles = { "(default_chest_top.png^[colorize:#FFFFFF77)^(default_obsidian_glass.png^[colorize:#00FFFF77)" }
 
 local function get_meta(pos_or_meta)
     if type(pos_or_meta) == "userdata" then
