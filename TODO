@@ -1,16 +1,1 @@
-* 1) cleanup
-* 2) investigate better ways to show shop contents w.r.t performance
-3) auto-change minegeld
-* 4) change color when shop is empty or has "money" in it (whatever the "pay" item is)
-* 5) Get rid of the "line" as a separate inventory - make it just an indicator
-6) make expire_link expire only the correct link attempt
-7) fix wifi refill to not be insane
-8) fix wifi send to move as much as possible to storage, not just 10 units of whatever
-9) let shops interact w/ tubelib
-10) Fix wifi linking maximum distance
-11) Update README
-12) log purchases
-13) fix display of certain items in shops
-    [x] fix display of nodes w/ complicated tiles
-    [ ] re-add the wield_item entity for mesh and nodebox nodes
-    [ ] add a new entity that is a composite of the 4 small entities
+See https://github.com/BlockySurvival/issue-tracker/issues/137
