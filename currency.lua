@@ -134,4 +134,4 @@ function smartshop.can_move_currency(src_currency_stack, src_inv, src_list_name,
     ]]--
 
 
-\end
+end
