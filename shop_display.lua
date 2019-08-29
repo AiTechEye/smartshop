@@ -186,7 +186,7 @@ minetest.register_lbm({
                   inv:add_item("main", pay_stack)
               end
               local give_stack = inv:get_stack("give" .. index, 1)
-              if give_stack:is_empty() and inv:room_for_item("main", give_stack) then
+              if not give_stack:is_empty() and inv:room_for_item("main", give_stack) then
                   inv:add_item("main", give_stack)
               end
           end
