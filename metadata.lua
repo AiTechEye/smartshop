@@ -49,23 +49,27 @@ end
 
 function smartshop.get_send_spos(pos_or_meta)
     local meta = get_meta(pos_or_meta)
+    smartshop.log("action", "getting send_spos of shop: %q", meta:get_string("item_send")) -- TODO: remove debug
     return meta:get_string("item_send")
 end
 
 function smartshop.set_send_spos(pos_or_meta, value, ...)
     local meta = get_meta(pos_or_meta)
     value = value:format(...)
+    smartshop.log("action", "setting send_spos of shop to %q", value) -- TODO: remove debug
     return meta:set_string("item_send", value)
 end
 
 function smartshop.get_refill_spos(pos_or_meta)
     local meta = get_meta(pos_or_meta)
+    smartshop.log("action", "getting refill_spos of shop: %q", meta:get_string("item_refill")) -- TODO: remove debug
     return meta:get_string("item_refill")
 end
 
 function smartshop.set_refill_spos(pos_or_meta, value, ...)
     local meta = get_meta(pos_or_meta)
     value = value:format(...)
+    smartshop.log("action", "setting refill_spos of shop to %q", value) -- TODO: remove debug
     return meta:set_string("item_refill", value)
 end
 

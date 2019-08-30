@@ -72,24 +72,18 @@ function smartshop.wifi_showform(pos, player)
     local shop_info = smartshop.add_storage[player_name]
     if shop_info and shop_info.pos then
         local distance = vector.distance(shop_info.pos, pos)
+        -- TODO: remove this debugging info
+        smartshop.log("action", "distance between shop and storage: %s", distance)
         if distance > smartshop.settings.max_wifi_distance then
             minetest.chat_send_player(player_name, "Too far, max distance " .. smartshop.settings.max_wifi_distance)
-        else
-            -- TODO: remove this debugging info
-            smartshop.log("action", "distance between shop and storage: %s", distance)
         end
         local shop_meta = minetest.get_meta(shop_info.pos)
-        local shop_spos = minetest.pos_to_string(pos)
-        if shop_spos then
-            if shop_info.send then
-                smartshop.set_send_spos(shop_meta, shop_spos)
-                minetest.chat_send_player(player_name, "send storage connected")
-            elseif shop_info.refill then
-                smartshop.set_refill_spos(shop_meta, shop_spos)
-                minetest.chat_send_player(player_name, "refill storage connected")
-            else
-                smartshop.log("warning", "weird data received when linking storage: %s", minetest.serialize(shop_info))
-            end
+        if shop_info.send then
+            smartshop.set_send_spos(shop_meta, spos)
+            minetest.chat_send_player(player_name, "send storage connected")
+        elseif shop_info.refill then
+            smartshop.set_refill_spos(shop_meta, spos)
+            minetest.chat_send_player(player_name, "refill storage connected")
         else
             smartshop.log("warning", "weird data received when linking storage: %s", minetest.serialize(shop_info))
         end
