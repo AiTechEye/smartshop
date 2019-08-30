@@ -72,8 +72,6 @@ function smartshop.wifi_showform(pos, player)
     local shop_info = smartshop.add_storage[player_name]
     if shop_info and shop_info.pos then
         local distance = vector.distance(shop_info.pos, pos)
-        -- TODO: remove this debugging info
-        smartshop.log("action", "distance between shop and storage: %s", distance)
         if distance > smartshop.settings.max_wifi_distance then
             minetest.chat_send_player(player_name, "Too far, max distance " .. smartshop.settings.max_wifi_distance)
         end

@@ -3,14 +3,11 @@ smartshop.util = {}
 function smartshop.util.string_to_pos(spos)
     -- can't just use minetest.string_to_pos, for sake of backward compatibility
     if not spos or type(spos) ~= "string" then
-        smartshop.log("action", "string_to_pos: bad value: %q", tostring(spos))  -- TODO: remove debug info
         return nil
     end
-    local x, y, z = spos:match("^%s*%(%s*(%d+)[%s,]+(%d+)[%s,]+(%d+)%s*%)%s*$")
+    local x, y, z = spos:match("^%s*%(?%s*(%-?%d+)[%s,]+(%-?%d+)[%s,]+(%-?%d+)%s*%)?%s*$")
     if x and y and z then
         return vector.new(tonumber(x), tonumber(y), tonumber(z))
-    else
-        smartshop.log("action", "string_to_pos: error parsing: %q", tostring(spos))  -- TODO: remove debug info
     end
 end
 
