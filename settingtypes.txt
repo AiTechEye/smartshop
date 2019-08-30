@@ -1,1 +1,2 @@
-smartshop.max_wifi_distance (Maximum distance between smartshop and wifi storage) int 30
+smartshop.max_wifi_distance (Maximum distance between smartshop and external storage) int 30
+smartshop.wifi_link_time (Number of seconds to link external storage) int 30

@@ -1,29 +1,35 @@
+local function toggle_mesein(meta)
+    local mesein = smartshop.get_mesein(meta)
+    if mesein <= 2 then
+        mesein = mesein + 1
+    else
+        mesein = 0
+    end
+    smartshop.set_mesein(meta, mesein)
+end
+
+
 function smartshop.wifi_receive_fields(player, pressed)
     local player_name = player:get_player_name()
-    local wifi_pos    = smartshop.player_pos[player_name]
-    if not wifi_pos then return end
-    local wifi_meta = minetest.get_meta(wifi_pos)
+    local pos         = smartshop.player_pos[player_name]
+    if not pos then return end
+    local meta = minetest.get_meta(pos)
 
     if pressed.mesesin then
-        local m = wifi_meta:get_int("mesein")
-        if m <= 2 then
-            m = m + 1
-        else
-            m = 0
-        end
-        wifi_meta:set_int("mesein", m)
-        smartshop.wifi_showform(wifi_pos, player)
-        return
+        toggle_mesein(meta)
+        smartshop.wifi_showform(pos, player)
     elseif pressed.save then
         local title = pressed.title
         if not title or title == "" then
-            title = "wifi " .. minetest.pos_to_string(wifi_pos)
+            title = "wifi " .. minetest.pos_to_string(pos)
         end
-        smartshop.set_title(wifi_meta, title)
-        local wifi_spos = minetest.pos_to_string(wifi_pos)
-        smartshop.log("action", "%s set title of wifi storage at %s to %s", player_name, wifi_spos, title)
+        smartshop.set_title(meta, title)
+        local spos = minetest.pos_to_string(pos)
+        smartshop.log("action", "%s set title of wifi storage at %s to %s", player_name, spos, title)
+        smartshop.player_pos[player_name] = nil
+    elseif pressed.quit then
+        smartshop.player_pos[player_name] = nil
     end
-    smartshop.player_pos[player_name] = nil
 end
 
 function smartshop.wifi_showform(pos, player)
@@ -41,14 +47,14 @@ function smartshop.wifi_showform(pos, player)
     local gui = "size[12,9]"
 
     if smartshop.settings.has_mesecon then
-        local m = meta:get_int("mesein")
-        if m == 0 then
+        local mesein = smartshop.get_mesein(meta)
+        if mesein == 0 then
             gui = gui .. "button[0,7;2,1;mesesin;Don't send]"
-        elseif m == 1 then
+        elseif mesein == 1 then
             gui = gui .. "button[0,7;2,1;mesesin;Incoming]"
-        elseif m == 2 then
+        elseif mesein == 2 then
             gui = gui .. "button[0,7;2,1;mesesin;Outcoming]"
-        elseif m == 3 then
+        elseif mesein == 3 then
             gui = gui .. "button[0,7;2,1;mesesin;Both]"
         end
         gui = gui .. "tooltip[mesesin;Send mesecon signal when items from shops does:]"
@@ -63,27 +69,35 @@ function smartshop.wifi_showform(pos, player)
        .. "listring[nodemeta:" .. fpos .. ";main]"
        .. "listring[current_player;main]"
 
-    smartshop.player_pos[player_name] = pos
-    minetest.after(0, minetest.show_formspec, player_name, "smartshop.wifi_showform", gui)
-
     local shop_info = smartshop.add_storage[player_name]
-    if shop_info then
-        if not shop_info.pos then return end
-        if vector.distance(shop_info.pos, pos) > smartshop.settings.max_wifi_distance then
+    if shop_info and shop_info.pos then
+        local distance = vector.distance(shop_info.pos, pos)
+        if distance > smartshop.settings.max_wifi_distance then
             minetest.chat_send_player(player_name, "Too far, max distance " .. smartshop.settings.max_wifi_distance)
+        else
+            -- TODO: remove this debugging info
+            smartshop.log("action", "distance between shop and storage: %s", distance)
         end
         local shop_meta = minetest.get_meta(shop_info.pos)
         local shop_spos = minetest.pos_to_string(pos)
         if shop_spos then
             if shop_info.send then
                 smartshop.set_send_spos(shop_meta, shop_spos)
+                minetest.chat_send_player(player_name, "send storage connected")
             elseif shop_info.refill then
                 smartshop.set_refill_spos(shop_meta, shop_spos)
+                minetest.chat_send_player(player_name, "refill storage connected")
+            else
+                smartshop.log("warning", "weird data received when linking storage: %s", minetest.serialize(shop_info))
             end
+        else
+            smartshop.log("warning", "weird data received when linking storage: %s", minetest.serialize(shop_info))
         end
-        minetest.chat_send_player(player_name, "smartshop connected")
         smartshop.add_storage[player_name] = nil
     end
+
+    smartshop.player_pos[player_name] = pos
+    minetest.after(0, minetest.show_formspec, player_name, "smartshop.wifi_showform", gui)
 end
 
 

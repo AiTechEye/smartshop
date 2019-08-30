@@ -16,17 +16,8 @@ local entity_offset = vector.new(0.01, 6.5/16, 0.01)
 
 local entities_by_pos = {}
 
-function smartshop.update_shop_info(pos)
-    local shop_meta = minetest.get_meta(pos)
-    local shop_inv  = shop_meta:get_inventory()
-    local owner     = smartshop.get_owner(shop_meta)
-
-	if smartshop.is_unlimited(shop_meta) then
-        smartshop.set_infotext(shop_meta, "(Smartshop by %s) Stock is unlimited", owner)
-        return
-    end
-
-	local inv_totals = {}
+local function get_inv_totals(shop_inv, refill_inv)
+    local inv_totals = {}
 	for i = 1, 32 do
 		local stack = shop_inv:get_stack("main", i)
 		if not stack:is_empty() and stack:is_known() and stack:get_wear() == 0 then
@@ -34,8 +25,20 @@ function smartshop.update_shop_info(pos)
 			inv_totals[name] = (inv_totals[name] or 0) + stack:get_count()
 		end
 	end
+    if refill_inv then
+        for i = 1, (12*5) do
+            local stack = refill_inv:get_stack("main", i)
+            if not stack:is_empty() and stack:is_known() and stack:get_wear() == 0 then
+                local name = stack:get_name()
+                inv_totals[name] = (inv_totals[name] or 0) + stack:get_count()
+            end
+        end
+    end
+    return inv_totals
+end
 
-	local lines = {("(Smartshop by %s) Purchases left:"):format(owner)}
+local function get_info_lines(owner, shop_inv, inv_totals)
+    local lines = {("(Smartshop by %s) Purchases left:"):format(owner)}
     for i = 1, 4, 1 do
 		local give_stack = shop_inv:get_stack("give" .. i, 1)
 		if not give_stack:is_empty() and give_stack:is_known() and give_stack:get_wear() == 0 then
@@ -51,6 +54,28 @@ function smartshop.update_shop_info(pos)
 			end
 		end
     end
+    return lines
+end
+
+function smartshop.update_shop_info(pos)
+    local shop_meta = minetest.get_meta(pos)
+    local owner     = smartshop.get_owner(shop_meta)
+
+	if smartshop.is_unlimited(shop_meta) then
+        smartshop.set_infotext(shop_meta, "(Smartshop by %s) Stock is unlimited", owner)
+        return
+    end
+
+    local shop_inv     = smartshop.get_inventory(shop_meta)
+	local refill_spos  = smartshop.get_refill_spos(shop_meta)
+    local refill_pos   = smartshop.util.string_to_pos(refill_spos)
+    local refill_inv
+    if refill_pos then
+        refill_inv = smartshop.get_inventory(refill_pos)
+    end
+
+	local inv_totals = get_inv_totals(shop_inv, refill_inv)
+	local lines = get_info_lines(owner, shop_inv, inv_totals)
 
     if #lines == 1 then
         smartshop.set_infotext(shop_meta, "(Smartshop by %s)\nThis shop is empty.", owner)
@@ -117,8 +142,8 @@ function smartshop.update_shop_display(pos)
     local dir         = element_dir[param2 + 1]
     if not dir then return end
 
-    local shop_meta  = minetest.get_meta(pos)
-    local shop_inv   = shop_meta:get_inventory()
+    local meta       = minetest.get_meta(pos)
+    local shop_inv   = smartshop.get_inventory(meta)
     local entity_pos = vector.add(pos, vector.multiply(dir, entity_offset))
 
     for index = 1, 4 do
@@ -164,33 +189,6 @@ minetest.register_lbm({
         end
         meta:from_table(metatable)
 	end,
-})
-
-minetest.register_lbm({
-      name              = "smartshop:repay_lost_stuff",
-      nodenames         = {
-          "smartshop:shop",
-          "smartshop:shop_empty",
-          "smartshop:shop_full",
-          "smartshop:shop_used",
-      },
-      run_at_every_load = false,
-      action            = function(pos, node)
-          -- recoup lost inventory items if possible
-          local meta = minetest.get_meta(pos)
-          if smartshop.is_creative(meta) then return end
-          local inv = meta:get_inventory()
-          for index = 1, 4 do
-              local pay_stack = inv:get_stack("pay" .. index, 1)
-              if not pay_stack:is_empty() and inv:room_for_item("main", pay_stack) then
-                  inv:add_item("main", pay_stack)
-              end
-              local give_stack = inv:get_stack("give" .. index, 1)
-              if not give_stack:is_empty() and inv:room_for_item("main", give_stack) then
-                  inv:add_item("main", give_stack)
-              end
-          end
-      end,
 })
 
 minetest.register_on_shutdown(function()

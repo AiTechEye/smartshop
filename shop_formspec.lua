@@ -1,24 +1,27 @@
-local function expire_link(player_name)
-	if smartshop.add_storage[player_name] then
-		minetest.chat_send_player(player_name, "Time expired (30s)")
+local wifi_link_time = smartshop.settings.wifi_link_time
+
+local function expire_link(player_name, kind, pos)
+	local add_storage = smartshop.add_storage[player_name]
+	if add_storage and add_storage[kind] and vector.equals(add_storage.pos, pos) then
+		minetest.chat_send_player(player_name, ("Smartshop linking time expired (%is)"):format(wifi_link_time))
 		smartshop.add_storage[player_name] = nil
 	end
 end
 
 local function toggle_send(player_name, pos)
 	smartshop.add_storage[player_name] = { send = true, pos = pos }
-	minetest.after(30, expire_link, player_name)
+	minetest.after(wifi_link_time, expire_link, player_name, "send", pos)
 	minetest.chat_send_player(player_name, "Open a storage owned by you")
 end
 
 local function toggle_refill(player_name, pos)
 	smartshop.add_storage[player_name] = { refill = true, pos = pos }
-	minetest.after(30, expire_link, player_name)
+	minetest.after(wifi_link_time, expire_link, player_name, "refill", pos)
 	minetest.chat_send_player(player_name, "Open a storage owned by you")
 end
 
 local function toggle_limit(player, pos)
-	local meta  = minetest.get_meta(pos)
+	local meta = minetest.get_meta(pos)
 	if smartshop.is_unlimited(meta) then
 		smartshop.set_unlimited(meta, false)
 	else
@@ -36,15 +39,21 @@ local function get_buy_n(pressed)
 	end
 end
 
-local function process_purchase(player_inv, shop_inv, pay_name, pay_stack, give_name, player_name, is_unlimited, shop_owner, pos)
+local function player_has_used_tool(player_inv, pay_stack)
 	for i = 0, 32, 1 do
 		local player_inv_stack = player_inv:get_stack("main", i)
 		if player_inv_stack:get_name() == pay_stack:get_name() and player_inv_stack:get_wear() > 0 then
-			minetest.chat_send_player(player_name, "Error: You cannot trade in used tools")
-			return
+			return true
 		end
 	end
-	if is_unlimited then
+	return false
+end
+
+local function process_purchase(player_inv, shop_inv, pay_name, pay_stack, give_name, player_name, is_unlimited, shop_owner, pos)
+	if player_has_used_tool(player_inv, pay_stack) then
+		minetest.chat_send_player(player_name, "Error: You cannot trade in used tools")
+		return
+	elseif is_unlimited then
 		player_inv:add_item("main", give_name)
 		player_inv:remove_item("main", pay_name)
 	else
@@ -62,8 +71,8 @@ local function transfer_wifi_storage(shop_meta, shop_inv, pay_name, get_name, ex
 	local send_pos  = smartshop.util.string_to_pos(send_spos)
 	if send_pos then
 		local wifi_meta = minetest.get_meta(send_pos)
-		local wifi_inv  = wifi_meta:get_inventory()
-		local mes       = wifi_meta:get_int("mesein")
+		local wifi_inv  = smartshop.get_inventory(wifi_meta)
+		local mes       = smartshop.get_mesein(wifi_meta)
 		for i = 1, 10 do
 			if wifi_inv:room_for_item("main", pay_name) and shop_inv:contains_item("main", pay_name) then
 				wifi_inv:add_item("main", shop_inv:remove_item("main", pay_name))
@@ -79,11 +88,11 @@ local function transfer_wifi_storage(shop_meta, shop_inv, pay_name, get_name, ex
 	local refill_spos = smartshop.get_refill_spos(shop_meta)
 	local refill_pos  = smartshop.util.string_to_pos(refill_spos)
 	if refill_pos then
-		local wifi_meta = minetest.get_meta(refill_pos)
-		local wifi_inv  = wifi_meta:get_inventory()
-		local mes       = wifi_meta:get_int("mesein")
+		local wifi_meta       = minetest.get_meta(refill_pos)
+		local wifi_inv        = smartshop.get_inventory(wifi_meta)
+		local mesein          = smartshop.get_mesein(wifi_meta)
 		local stuff_was_moved = false
-		local space     = 0
+		local space           = 0
 		--check if its room for other items, else the shop will stuck
 		for i = 1, 32, 1 do
 			if shop_inv:get_stack("main", i):get_count() == 0 then
@@ -95,7 +104,7 @@ local function transfer_wifi_storage(shop_meta, shop_inv, pay_name, get_name, ex
 				local rstack = wifi_inv:remove_item("main", get_name)
 				shop_inv:add_item("main", rstack)
 				stuff_was_moved = true
-				if mes == 2 or mes == 3 then
+				if mesein == 2 or mesein == 3 then
 					smartshop.send_mesecon(refill_pos)
 				end
 			else
@@ -110,7 +119,7 @@ end
 
 local function buy_item_n(player, pos, n)
 	local meta        = minetest.get_meta(pos)
-	local shop_inv    = meta:get_inventory()
+	local shop_inv    = smartshop.get_inventory(meta)
 	local get_stack   = shop_inv:get_stack("give" .. n, 1)
 	local name        = get_stack:get_name()
 	if name == "" then return end
@@ -176,31 +185,37 @@ local function get_shop_owner_gui(spos, shop_meta, is_creative)
 	end
 
     if send_pos then
-        local wifi_meta = minetest.get_meta(send_pos)
-        local title     = smartshop.get_title(wifi_meta)
+        local wifi_meta  = minetest.get_meta(send_pos)
+        local wifi_title = smartshop.get_title(wifi_meta)
 		local wifi_owner = smartshop.get_owner(wifi_meta)
-        if title == "" or wifi_owner ~= shop_owner then
+        if wifi_title == "" or wifi_owner ~= shop_owner then
+			smartshop.log("warning", "send storage for shop @ %s has error: send_pos=%q title=%q wifi_owner=%q shop_owner=%q",
+						  spos, send_spos, wifi_title, wifi_owner, shop_owner)
             smartshop.set_send_spos(shop_meta, "")
-            title = "error"
-        end
-		title = minetest.formspec_escape(title)
-        gui = gui .. "tooltip[tsend;Payments sent to " .. title .. "]"
+	        gui = gui .. "tooltip[tsend;Error w/ send storage]"
+		else
+			wifi_title = minetest.formspec_escape(wifi_title)
+            gui        = gui .. "tooltip[tsend;Payments sent to " .. wifi_title .. "]"
+	    end
     else
-        gui = gui .. "tooltip[tsend;No send wifi configured]"
+        gui = gui .. "tooltip[tsend;No send storage configured]"
     end
 
     if refill_pos then
-        local wifi_meta = minetest.get_meta(refill_pos)
-        local title     = smartshop.get_title(wifi_meta)
+        local wifi_meta  = minetest.get_meta(refill_pos)
+        local wifi_title = smartshop.get_title(wifi_meta)
 		local wifi_owner = smartshop.get_owner(wifi_meta)
-        if title == "" or wifi_owner ~= shop_owner then
+        if wifi_title == "" or wifi_owner ~= shop_owner then
+			smartshop.log("warning", "refill storage for shop @ %s has error: send_pos=%q title=%q wifi_owner=%q shop_owner=%q",
+						  spos, send_spos, wifi_title, wifi_owner, shop_owner)
 			smartshop.set_refill_spos(shop_meta, "")
-            title = "error"
+	        gui = gui .. "tooltip[tsend;Error w/ refill storage]"
+		else
+			wifi_title = minetest.formspec_escape(wifi_title)
+			gui        = gui .. "tooltip[trefill;Refilled from " .. wifi_title .. "]"
         end
-		title = minetest.formspec_escape(title)
-        gui = gui .. "tooltip[trefill;Refilled from " .. title .. "]"
     else
-        gui = gui .. "tooltip[trefill;No refill wifi configured]"
+        gui = gui .. "tooltip[trefill;No refill storage configured]"
     end
 
 	if is_unlimited then
@@ -257,14 +272,14 @@ function smartshop.shop_receive_fields(player, pressed)
     else
         smartshop.update_shop_info(pos)
         smartshop.update_shop_display(pos, "update")
-        smartshop.player_pos[player:get_player_name()] = nil
 		smartshop.update_shop_color(pos)
+        smartshop.player_pos[player_name] = nil
     end
 end
 
 function smartshop.shop_showform(pos, player, ignore_owner)
-    local shop_meta   = minetest.get_meta(pos)
-    local shop_inv    = shop_meta:get_inventory()
+    local meta        = minetest.get_meta(pos)
+    local inv         = smartshop.get_inventory(meta)
     local fpos        = pos.x .. "," .. pos.y .. "," .. pos.z
     local player_name = player:get_player_name()
     local is_owner
@@ -278,16 +293,16 @@ function smartshop.shop_showform(pos, player, ignore_owner)
     local gui
     if is_owner then
         -- if a shop is creative, but the player no longer has creative privs, revert the shop
-        local is_creative = smartshop.is_creative(shop_meta)
+        local is_creative = smartshop.is_creative(meta)
         if is_creative and not smartshop.util.player_is_creative(player_name) then
-			smartshop.set_creative(shop_meta, false)
-			smartshop.set_unlimited(shop_meta, false)
+			smartshop.set_creative(meta, false)
+			smartshop.set_unlimited(meta, false)
             is_creative = false
         end
 
-        gui = get_shop_owner_gui(fpos, shop_meta, is_creative)
+        gui = get_shop_owner_gui(fpos, meta, is_creative)
     else
-        gui = get_shop_player_gui(fpos, shop_inv)
+        gui = get_shop_player_gui(fpos, inv)
     end
 
     smartshop.player_pos[player_name] = pos

@@ -17,15 +17,23 @@ smartshop.add_storage = {}
 dofile(smartshop.modpath .. "/settings.lua")
 dofile(smartshop.modpath .. "/util.lua")
 
-dofile(smartshop.modpath .. "/shop_display.lua")
-dofile(smartshop.modpath .. "/shop_formspec.lua")
-dofile(smartshop.modpath .. "/wifi_formspec.lua")
-dofile(smartshop.modpath .. "/nodes.lua")
-dofile(smartshop.modpath .. "/crafting.lua")
-dofile(smartshop.modpath .. "/entities.lua")
+dofile(smartshop.modpath .. "/metadata.lua")
 
 --dofile(smartshop.modpath .. "/currency.lua")
 dofile(smartshop.modpath .. "/mesecons.lua")
+
+dofile(smartshop.modpath .. "/entities.lua")
+
+dofile(smartshop.modpath .. "/shop_node.lua")
+dofile(smartshop.modpath .. "/shop_display.lua")
+dofile(smartshop.modpath .. "/shop_formspec.lua")
+dofile(smartshop.modpath .. "/shop_color.lua")
+
+dofile(smartshop.modpath .. "/storage_node.lua")
+dofile(smartshop.modpath .. "/storage_formspec.lua")
+
+dofile(smartshop.modpath .. "/crafting.lua")
+
 
 minetest.register_on_player_receive_fields(function(player, form, pressed)
     if form == "smartshop.shop_showform" then

@@ -99,6 +99,23 @@ local function get_image(item)
     return image or "unknown_node.png"
 end
 
+local function on_activate(self, staticdata)
+    local data = minetest.deserialize(staticdata)
+    if not data then
+        self.object:remove()
+        return
+    end
+    self.item  = data.item
+    self.pos   = data.pos
+    self.index = data.index
+    local image = get_image(self.item)
+    self.object:set_properties({ textures = { image } })
+end
+
+local function get_staticdata(self)
+    return minetest.serialize({item=self.item, pos=self.pos, index=self.index})
+end
+
 minetest.register_entity("smartshop:item", {
     hp_max         = 1,
     visual         = "sprite",
@@ -108,19 +125,6 @@ minetest.register_entity("smartshop:item", {
     textures       = { "air" },
     smartshop2     = true,
     type           = "",
-    on_activate    = function(self, staticdata)
-        local data = minetest.deserialize(staticdata)
-        if not data then
-            self.object:remove()
-            return
-        end
-        self.item  = data.item
-        self.pos   = data.pos
-        self.index = data.index
-        local image = get_image(self.item)
-        self.object:set_properties({ textures = { image } })
-    end,
-    get_staticdata = function(self)
-        return minetest.serialize({item=self.item, pos=self.pos, index=self.index})
-    end,
+    on_activate    = on_activate,
+    get_staticdata = get_staticdata,
 })
