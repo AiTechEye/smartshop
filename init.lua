@@ -19,7 +19,11 @@ dofile(smartshop.modpath .. "/util.lua")
 
 dofile(smartshop.modpath .. "/metadata.lua")
 
---dofile(smartshop.modpath .. "/currency.lua")
+if smartshop.settings.has_currency and smartshop.settings.change_currency then
+    dofile(smartshop.modpath .. "/currency.lua")
+else
+    dofile(smartshop.modpath .. "/currency_no.lua")
+end
 dofile(smartshop.modpath .. "/mesecons.lua")
 
 dofile(smartshop.modpath .. "/entities.lua")

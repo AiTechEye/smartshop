@@ -1,2 +1,8 @@
-smartshop.max_wifi_distance (Maximum distance between smartshop and external storage) int 30
-smartshop.wifi_link_time (Number of seconds to link external storage) int 30
+# Maximum distance between smartshop and external storage
+smartshop.max_wifi_distance (Smartshop max storage distance) int 30 0 113512
+
+# Number of seconds to link external storage
+smartshop.wifi_link_time (Smartshop storage link time) int 30 0 3600
+
+# Enable currency changing (experimental feature).
+smartshop.change_currency (Enable currency changing) bool true

@@ -120,33 +120,41 @@ end
 local function buy_item_n(player, pos, n)
 	local meta        = minetest.get_meta(pos)
 	local shop_inv    = smartshop.get_inventory(meta)
-	local get_stack   = shop_inv:get_stack("give" .. n, 1)
-	local name        = get_stack:get_name()
+	local give_stack  = shop_inv:get_stack("give" .. n, 1)
+	local name        = give_stack:get_name()
 	if name == "" then return end
 
 	local exchange_possible
 	local is_unlimited  = smartshop.is_unlimited(meta)
 	local player_inv    = player:get_inventory()
-	local get_name      = name .. " " .. get_stack:get_count()
+	local give_name     = name .. " " .. give_stack:get_count()
 	local pay_stack     = shop_inv:get_stack("pay" .. n, 1)
 	local pay_name      = pay_stack:get_name() .. " " .. pay_stack:get_count()
 	local shop_owner    = smartshop.get_owner(meta)
 
     local player_name   = player:get_player_name()
 	--fast checks
-	if not player_inv:room_for_item("main", get_name) then
-		minetest.chat_send_player(player_name, "Error: Your inventory is full, exchange failed.")
-		return
-	elseif not player_inv:contains_item("main", pay_name) then
-		minetest.chat_send_player(player_name, "Error: You dont have enough to buy this, exchange failed.")
-		return
-	elseif not is_unlimited and shop_inv:room_for_item("main", pay_name) == false then
-		minetest.chat_send_player(player_name, "Error: This shop is full, exchange failed.")
+	--if not player_inv:room_for_item("main", get_stack) then
+	--	-- TODO: possibly there will be room after the item is removed?
+	--	minetest.chat_send_player(player_name, "Error: Your inventory is full, exchange failed.")
+	--	return
+	--else
+	local is_possible, items_to_take, item_to_give
+	if not player_inv:contains_item("main", pay_stack) then
+		if smartshop.is_currency(pay_stack) and not smartshop.is_currency("give_stack") then
+			is_possible, items_to_take, item_to_give = smartshop.can_move_currency(pay_stack, player_inv, "main", give_stack)
+		end
+		minetest.chat_send_player(player_name, "Error: You dont have payment for this, exchange failed.")
 		return
 	end
+	--elseif not is_unlimited and shop_inv:room_for_item("main", pay_stack) == false then
+	--	-- TODO: also possible the exchange could happen after taking out an item
+	--	minetest.chat_send_player(player_name, "Error: This shop is full, exchange failed.")
+	--	return
+	--end
 
-	if is_unlimited or shop_inv:contains_item("main", get_name) then
-		process_purchase(player_inv, shop_inv, pay_name, pay_stack, get_name, player_name, is_unlimited, shop_owner, pos)
+	if is_unlimited or shop_inv:contains_item("main", give_name) then
+		process_purchase(player_inv, shop_inv, pay_name, pay_stack, give_name, player_name, is_unlimited, shop_owner, pos)
 		smartshop.send_mesecon(pos)
 		exchange_possible = true
 	else
@@ -155,7 +163,7 @@ local function buy_item_n(player, pos, n)
 	end
 	-- send to / refill from wifi storage
 	if not is_unlimited then
-		transfer_wifi_storage(meta, shop_inv, pay_name, get_name, exchange_possible, player_name)
+		transfer_wifi_storage(meta, shop_inv, pay_name, give_name, exchange_possible, player_name)
 	end
 end
 
