@@ -84,11 +84,19 @@ local function allow_metadata_inventory_move(pos, from_list, from_index, to_list
     elseif from_list == "main" then
         local inv   = smartshop.get_inventory(pos)
         local stack = inv:get_stack(from_list, from_index)
-        return allow_metadata_inventory_put(pos, to_list, to_index, stack, player)
+        if allow_metadata_inventory_put(pos, to_list, to_index, stack, player) ~= 0 then
+            return count
+        else
+            return 0
+        end
     elseif to_list == "main" then
         local inv   = smartshop.get_inventory(pos)
         local stack = inv:get_stack(to_list, to_index)
-        return allow_metadata_inventory_take(pos, from_list, from_index, stack, player)
+        if allow_metadata_inventory_take(pos, from_list, from_index, stack, player) ~= 0 then
+            return count
+        else
+            return 0
+        end
     else
         return count
     end
