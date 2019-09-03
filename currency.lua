@@ -189,7 +189,7 @@ local function get_items_to_take(currency_to_take)
     return items_to_take
 end
 
-function smartshop.can_exchange_currency(player_inv, shop_inv, pay_stack, give_stack, is_unlimited)
+function smartshop.can_exchange_currency(player_inv, shop_inv, send_inv, refill_inv, pay_stack, give_stack, is_unlimited)
     --[[
         This function implements a quick-and-dirty change-making algorithm.
         It can return "false" when change-making is actually technically possible,
@@ -260,12 +260,32 @@ function smartshop.can_exchange_currency(player_inv, shop_inv, pay_stack, give_s
 
     if not is_unlimited then
         local shop_inv_copy = smartshop.util.clone_tmp_inventory("smartshop_tmp_shop_inv", shop_inv, "main")
+        local send_inv_copy = send_inv and smartshop.util.clone_tmp_inventory("smartshop_tmp_send_inv", send_inv, "main")
+        local refill_inv_copy = refill_inv and smartshop.util.clone_tmp_inventory("smartshop_tmp_refill_inv", refill_inv, "main")
+
         function helper()
-            local sold_thing = shop_inv_copy:remove_item("main", give_stack)
+            local sold_thing
+			if refill_inv_copy then
+				sold_thing = refill_inv_copy:remove_item("main", give_stack)
+				local sold_count = sold_thing:get_count()
+				local still_need = give_stack:get_count() - sold_count
+				if still_need ~= 0 then
+					sold_thing = shop_inv_copy:remove_item("main", {name = give_stack:get_name(), count = still_need})
+					sold_thing:set_count(sold_thing:get_count() + sold_count)
+				end
+			else
+				sold_thing = shop_inv_copy:remove_item("main", give_stack)
+			end
             if sold_thing:get_count() < give_stack:get_count() then
 				return false, ("%s is sold out"):format(sold_thing:get_name())
             end
-			local leftover = shop_inv_copy:add_item("main", pay_stack)
+			local leftover
+			if send_inv_copy then
+				leftover = send_inv_copy:add_item("main", pay_stack)
+				leftover = shop_inv_copy:add_item("main", leftover)
+			else
+				leftover = shop_inv_copy:add_item("main", pay_stack)
+			end
 			if not leftover:is_empty() then
 				return false, "the shop is full"
 			end
@@ -273,6 +293,8 @@ function smartshop.can_exchange_currency(player_inv, shop_inv, pay_stack, give_s
         end
         rv, message = helper()
         smartshop.util.delete_tmp_inventory("smartshop_tmp_shop_inv")
+        smartshop.util.delete_tmp_inventory("smartshop_tmp_send_inv")
+        smartshop.util.delete_tmp_inventory("smartshop_tmp_refill_inv")
         if not rv then
             return rv, nil, nil, message
         end
@@ -281,76 +303,57 @@ function smartshop.can_exchange_currency(player_inv, shop_inv, pay_stack, give_s
     return true, items_to_take, change_to_give
 end
 
-function smartshop.exchange_currency(player_inv, shop_inv, items_to_take, item_to_give, pay_stack, give_stack, is_unlimited)
+function smartshop.exchange_currency(player_inv, shop_inv, send_inv, refill_inv, items_to_take, item_to_give, pay_stack, give_stack, is_unlimited)
 	if is_unlimited then
         for _, item_to_take in pairs(items_to_take) do
             local removed = player_inv:remove_item("main", item_to_take)
             if removed:get_count() < item_to_take:get_count() then
-                smartshop.log(
-                        "error",
-                        "(ec) failed to extract full payment using creative shop (missing: %s)",
-                        removed:to_string()
-                )
+                smartshop.log("error", "(ec) failed to extract full payment using creative shop (missing: %s)", removed:to_string())
             end
         end
 		local leftover = player_inv:add_item("main", item_to_give)
 		if not leftover:is_empty() then
-			smartshop.log(
-				"error",
-				"(ec) player did not receive full *change* amount when using creative shop (leftover: %s)",
-				leftover:to_string()
-			)
+			smartshop.log("error", "(ec) player did not receive full *change* amount when using creative shop (leftover: %s)", leftover:to_string())
 		end
         leftover = player_inv:add_item("main", give_stack)
 		if not leftover:is_empty() then
-			smartshop.log(
-				"error",
-				"(ec) player did not receive full amount when using creative shop (leftover: %s)",
-				leftover:to_string()
-			)
+			smartshop.log("error", "(ec) player did not receive full amount when using creative shop (leftover: %s)", leftover:to_string())
 		end
 	else
         for _, item_to_take in pairs(items_to_take) do
             local payment    = player_inv:remove_item("main", item_to_take)
             if payment:get_count() < item_to_take:get_count() then
-                smartshop.log(
-                    "error",
-                    "(ec) failed to extract full purchase from shop (missing: %s)",
-                    payment:to_string()
-                )
+                smartshop.log("error", "(ec) failed to extract full purchase from shop (missing: %s)", payment:to_string())
             end
         end
-		local sold_thing = shop_inv:remove_item("main", give_stack)
-		if sold_thing:get_count() < give_stack:get_count() then
-			smartshop.log(
-				"error",
-				"(ec) failed to extract full payment (missing: %s)",
-				sold_thing:to_string()
-			)
+		local sold_thing
+		if refill_inv then
+			sold_thing = refill_inv:remove_item("main", give_stack)
+			local sold_count = sold_thing:get_count()
+			local still_need = give_stack:get_count() - sold_count
+			if still_need ~= 0 then
+				sold_thing = shop_inv:remove_item("main", {name = give_stack:get_name(), count = still_need})
+				sold_thing:set_count(sold_thing:get_count() + sold_count)
+			end
+		else
+			sold_thing = shop_inv:remove_item("main", give_stack)
 		end
 		local leftover   = player_inv:add_item("main", sold_thing)
 		if not leftover:is_empty() then
-			smartshop.log(
-				"error",
-				"(ec) player did not receive full amount from shop (leftover: %s)",
-				leftover:to_string()
-			)
+			smartshop.log("error", "(ec) player did not receive full amount from shop (leftover: %s)", leftover:to_string())
 		end
         leftover   = player_inv:add_item("main", item_to_give)
 		if not leftover:is_empty() then
-			smartshop.log(
-				"error",
-				"(ec) player did not receive full *change* amount (leftover: %s)",
-				leftover:to_string()
-			)
+			smartshop.log("error", "(ec) player did not receive full *change* amount (leftover: %s)", leftover:to_string())
 		end
-		leftover = shop_inv:add_item("main", pay_stack)
+		if send_inv then
+			leftover = send_inv:add_item("main", pay_stack)
+			leftover = shop_inv:add_item("main", leftover)
+		else
+			leftover = shop_inv:add_item("main", pay_stack)
+		end
 		if not leftover:is_empty() then
-			smartshop.log(
-				"error",
-				"(ec) shop did not receive full payment (leftover: %s)",
-				leftover:to_string()
-			)
+			smartshop.log("error", "(ec) shop did not receive full payment (leftover: %s)", leftover:to_string())
 		end
 	end
 end

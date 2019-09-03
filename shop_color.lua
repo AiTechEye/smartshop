@@ -1,16 +1,17 @@
-local function get_exchange_status(inv, slot)
+local function get_exchange_status(shop_inv, slot, send_inv, refill_inv)
     local pay_key = "pay"..slot
-    local pay_stack = inv:get_stack(pay_key, 1)
+    local pay_stack = shop_inv:get_stack(pay_key, 1)
     local give_key = "give"..slot
-    local give_stack = inv:get_stack(give_key, 1)
+    local give_stack = shop_inv:get_stack(give_key, 1)
 
+    -- TODO: this isn't quite correct, as it doesn't allow for stacks split between the shop and storage
     if give_stack:is_empty() or pay_stack:is_empty() then
         return "skip"
-    elseif not inv:room_for_item("main", pay_stack) then
+    elseif not (shop_inv:room_for_item("main", pay_stack) or (send_inv and send_inv:room_for_item("main", pay_stack))) then
         return "full"
-    elseif not inv:contains_item("main", give_stack) then
+    elseif not (shop_inv:contains_item("main", give_stack) or (refill_inv and refill_inv:contains_item("main", give_stack))) then
         return "empty"
-    elseif inv:contains_item("main", pay_stack) then
+    elseif shop_inv:contains_item("main", pay_stack) or (send_inv and send_inv:contains_item("main", pay_stack)) then
         return "used"
     else
         return "ignore"
@@ -38,6 +39,12 @@ function smartshop.update_shop_color(pos)
     local shop_meta    = minetest.get_meta(pos)
     local shop_inv     = smartshop.get_inventory(shop_meta)
     local is_unlimited = smartshop.is_unlimited(shop_meta)
+	local send_spos    = smartshop.get_send_spos(shop_meta)
+    local send_pos     = smartshop.util.string_to_pos(send_spos)
+	local send_inv     = send_pos and minetest.get_meta(send_pos):get_inventory()
+	local refill_spos  = smartshop.get_refill_spos(shop_meta)
+    local refill_pos   = smartshop.util.string_to_pos(refill_spos)
+	local refill_inv   = refill_pos and minetest.get_meta(refill_pos):get_inventory()
 
     local total        = 4
     local full_count   = 0
@@ -45,7 +52,7 @@ function smartshop.update_shop_color(pos)
     local used         = false
 
     for slot = 1,4 do
-        local status = get_exchange_status(shop_inv, slot)
+        local status = get_exchange_status(shop_inv, slot, send_inv, refill_inv)
         if status == "full" then
             full_count = full_count + 1
         elseif status == "empty" then

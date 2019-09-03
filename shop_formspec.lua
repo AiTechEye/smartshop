@@ -49,9 +49,11 @@ local function player_has_used_tool(player_inv, pay_stack)
 	return false
 end
 
-local function can_exchange(player_inv, shop_inv, pay_stack, give_stack, is_unlimited)
+local function can_exchange(player_inv, shop_inv, send_inv, refill_inv, pay_stack, give_stack, is_unlimited)
 	local player_inv_copy = smartshop.util.clone_tmp_inventory("smartshop_tmp_player_inv", player_inv, "main")
 	local shop_inv_copy = smartshop.util.clone_tmp_inventory("smartshop_tmp_shop_inv", shop_inv, "main")
+	local send_inv_copy = send_inv and smartshop.util.clone_tmp_inventory("smartshop_tmp_send_inv", send_inv, "main")
+	local refill_inv_copy = refill_inv and smartshop.util.clone_tmp_inventory("smartshop_tmp_refill_inv", refill_inv, "main")
 
 	local function helper()
 		if is_unlimited then
@@ -64,7 +66,18 @@ local function can_exchange(player_inv, shop_inv, pay_stack, give_stack, is_unli
 				return false, "your inventory is full"
 			end
 		else
-			local sold_thing = shop_inv_copy:remove_item("main", give_stack)
+			local sold_thing
+			if refill_inv_copy then
+				sold_thing = refill_inv_copy:remove_item("main", give_stack)
+				local sold_count = sold_thing:get_count()
+				local still_need = give_stack:get_count() - sold_count
+				if still_need ~= 0 then
+					sold_thing = shop_inv_copy:remove_item("main", {name = give_stack:get_name(), count = still_need})
+					sold_thing:set_count(sold_thing:get_count() + sold_count)
+				end
+			else
+				sold_thing = shop_inv_copy:remove_item("main", give_stack)
+			end
 			if sold_thing:get_count() < give_stack:get_count() then
 				return false, ("%s is sold out"):format(sold_thing:get_name())
 			end
@@ -75,6 +88,12 @@ local function can_exchange(player_inv, shop_inv, pay_stack, give_stack, is_unli
 			local leftover   = player_inv_copy:add_item("main", sold_thing)
 			if not leftover:is_empty() then
 				return false, "your inventory is full"
+			end
+			if send_inv_copy then
+				leftover = send_inv_copy:add_item("main", payment)
+				leftover = shop_inv_copy:add_item("main", leftover)
+			else
+				leftover = shop_inv_copy:add_item("main", payment)
 			end
 			leftover = shop_inv_copy:add_item("main", payment)
 			if not leftover:is_empty() then
@@ -89,111 +108,54 @@ local function can_exchange(player_inv, shop_inv, pay_stack, give_stack, is_unli
 
 	smartshop.util.delete_tmp_inventory("smartshop_tmp_player_inv")
 	smartshop.util.delete_tmp_inventory("smartshop_tmp_shop_inv")
+	smartshop.util.delete_tmp_inventory("smartshop_tmp_send_inv")
+	smartshop.util.delete_tmp_inventory("smartshop_tmp_refill_inv")
 
 	return rv, reason
 end
 
-local function process_purchase(player_inv, shop_inv, pay_stack, give_stack, is_unlimited)
+local function process_purchase(player_inv, shop_inv, send_inv, refill_inv, pay_stack, give_stack, is_unlimited)
 	if is_unlimited then
 		local removed = player_inv:remove_item("main", pay_stack)
 		if removed:get_count() < pay_stack:get_count() then
-			smartshop.log(
-				"error",
-				"failed to extract full payment using creative shop (missing: %s)",
-				removed:to_string()
-			)
+			smartshop.log("error", "failed to extract full payment using creative shop (missing: %s)", removed:to_string())
 		end
 		local leftover = player_inv:add_item("main", give_stack)
 		if not leftover:is_empty() then
-			smartshop.log(
-				"error",
-				"player did not receive full amount when using creative shop (leftover: %s)",
-				leftover:to_string()
-			)
+			smartshop.log("error", "player did not receive full amount when using creative shop (leftover: %s)", leftover:to_string())
 		end
 	else
 		local payment    = player_inv:remove_item("main", pay_stack)
 		if payment:get_count() < pay_stack:get_count() then
-			smartshop.log(
-				"error",
-				"failed to extract full purchase from shop (missing: %s)",
-				payment:to_string()
-			)
+			smartshop.log("error", "failed to extract full purchase from shop (missing: %s)", payment:to_string())
 		end
-		local sold_thing = shop_inv:remove_item("main", give_stack)
+		local sold_thing
+		if refill_inv then
+			sold_thing = refill_inv:remove_item("main", give_stack)
+			local sold_count = sold_thing:get_count()
+			local still_need = give_stack:get_count() - sold_count
+			if still_need ~= 0 then
+				sold_thing = shop_inv:remove_item("main", {name = give_stack:get_name(), count = still_need})
+				sold_thing:set_count(sold_thing:get_count() + sold_count)
+			end
+		else
+			sold_thing = shop_inv:remove_item("main", give_stack)
+		end
 		if sold_thing:get_count() < give_stack:get_count() then
-			smartshop.log(
-				"error",
-				"failed to extract full payment (missing: %s)",
-				sold_thing:to_string()
-			)
+			smartshop.log("error", "failed to extract full payment (missing: %s)", sold_thing:to_string())
 		end
 		local leftover   = player_inv:add_item("main", sold_thing)
 		if not leftover:is_empty() then
-			smartshop.log(
-				"error",
-				"player did not receive full amount from shop (leftover: %s)",
-				leftover:to_string()
-			)
+			smartshop.log("error", "player did not receive full amount from shop (leftover: %s)", leftover:to_string())
 		end
-		leftover = shop_inv:add_item("main", payment)
+		if send_inv then
+			leftover = send_inv:add_item("main", payment)
+			leftover = shop_inv:add_item("main", leftover)
+		else
+			leftover = shop_inv:add_item("main", payment)
+		end
 		if not leftover:is_empty() then
-			smartshop.log(
-				"error",
-				"shop did not receive full payment (leftover: %s)",
-				leftover:to_string()
-			)
-		end
-	end
-end
-
-local function transfer_wifi_storage(shop_meta, shop_inv, pay_name, get_name, exchange_possible, player_name)
-	local send_spos = smartshop.get_send_spos(shop_meta)
-	local send_pos  = smartshop.util.string_to_pos(send_spos)
-	if send_pos then
-		local wifi_meta = minetest.get_meta(send_pos)
-		local wifi_inv  = smartshop.get_inventory(wifi_meta)
-		local mes       = smartshop.get_mesein(wifi_meta)
-		for i = 1, 10 do
-			if wifi_inv:room_for_item("main", pay_name) and shop_inv:contains_item("main", pay_name) then
-				wifi_inv:add_item("main", shop_inv:remove_item("main", pay_name))
-				if mes == 1 or mes == 3 then
-					smartshop.send_mesecon(send_pos)
-				end
-			else
-				break
-			end
-		end
-	end
-
-	local refill_spos = smartshop.get_refill_spos(shop_meta)
-	local refill_pos  = smartshop.util.string_to_pos(refill_spos)
-	if refill_pos then
-		local wifi_meta       = minetest.get_meta(refill_pos)
-		local wifi_inv        = smartshop.get_inventory(wifi_meta)
-		local mesein          = smartshop.get_mesein(wifi_meta)
-		local stuff_was_moved = false
-		local space           = 0
-		--check if its room for other items, else the shop will stuck
-		for i = 1, 32, 1 do
-			if shop_inv:get_stack("main", i):get_count() == 0 then
-				space = space + 1
-			end
-		end
-		for i = 1, space, 1 do
-			if i < space and wifi_inv:contains_item("main", get_name) and shop_inv:room_for_item("main", get_name) then
-				local rstack = wifi_inv:remove_item("main", get_name)
-				shop_inv:add_item("main", rstack)
-				stuff_was_moved = true
-				if mesein == 2 or mesein == 3 then
-					smartshop.send_mesecon(refill_pos)
-				end
-			else
-				break
-			end
-		end
-		if stuff_was_moved and not exchange_possible then
-			minetest.chat_send_player(player_name, "Try again, stock just refilled")
+			smartshop.log("error", "shop did not receive full payment (leftover: %s)", leftover:to_string())
 		end
 	end
 end
@@ -202,16 +164,23 @@ local function buy_item_n(player, pos, n)
     local player_name      = player:get_player_name()
 	local player_inv       = player:get_inventory()
 	local spos             = minetest.pos_to_string(pos)
-	local meta             = minetest.get_meta(pos)
-	local is_unlimited     = smartshop.is_unlimited(meta)
-	local shop_owner       = smartshop.get_owner(meta)
-	local shop_inv         = smartshop.get_inventory(meta)
+	local shop_meta        = minetest.get_meta(pos)
+	local is_unlimited     = smartshop.is_unlimited(shop_meta)
+	local shop_owner       = smartshop.get_owner(shop_meta)
+	local shop_inv         = smartshop.get_inventory(shop_meta)
 	local give_stack       = shop_inv:get_stack("give" .. n, 1)
 	local give_name        = give_stack:to_string()
 	local is_give_currency = smartshop.is_currency(give_stack)
 	local pay_stack        = shop_inv:get_stack("pay" .. n, 1)
 	local pay_name         = pay_stack:to_string()
 	local is_pay_currency  = smartshop.is_currency(pay_stack)
+
+	local send_spos        = smartshop.get_send_spos(shop_meta)
+    local send_pos         = smartshop.util.string_to_pos(send_spos)
+	local send_inv         = send_pos and minetest.get_meta(send_pos):get_inventory()
+	local refill_spos      = smartshop.get_refill_spos(shop_meta)
+    local refill_pos       = smartshop.util.string_to_pos(refill_spos)
+	local refill_inv       = refill_pos and minetest.get_meta(refill_pos):get_inventory()
 
 	if give_stack:is_empty() or pay_stack:is_empty() then
 		smartshop.log("action", "attempt to buy or sell nothing")
@@ -223,17 +192,17 @@ local function buy_item_n(player, pos, n)
 		return
 	end
 
-	local exchange_possible, reason_why_not = can_exchange(player_inv, shop_inv, pay_stack, give_stack, is_unlimited)
+	local exchange_possible, reason_why_not = can_exchange(player_inv, shop_inv, send_inv, refill_inv, pay_stack, give_stack, is_unlimited)
 
 	if exchange_possible then
-		process_purchase(player_inv, shop_inv, pay_stack, give_stack, is_unlimited)
+		process_purchase(player_inv, shop_inv, send_inv, refill_inv, pay_stack, give_stack, is_unlimited)
 		smartshop.log("action", "%s bought %q for %q from %s at %s", player_name, give_name, pay_name, shop_owner, spos)
 		smartshop.send_mesecon(pos)
 	elseif is_pay_currency and not is_give_currency then
 		local items_to_take, item_to_give
-		exchange_possible, items_to_take, item_to_give, reason_why_not = smartshop.can_exchange_currency(player_inv, shop_inv, pay_stack, give_stack, is_unlimited)
+		exchange_possible, items_to_take, item_to_give, reason_why_not = smartshop.can_exchange_currency(player_inv, shop_inv, send_inv, refill_inv, pay_stack, give_stack, is_unlimited)
 		if exchange_possible then
-			smartshop.exchange_currency(player_inv, shop_inv, items_to_take, item_to_give, pay_stack, give_stack, is_unlimited)
+			smartshop.exchange_currency(player_inv, shop_inv, send_inv, refill_inv, items_to_take, item_to_give, pay_stack, give_stack, is_unlimited)
 			smartshop.log("action", "%s bought %q for %q from %s at %s", player_name, give_name, pay_name, shop_owner, spos)
 			smartshop.send_mesecon(pos)
 		end
@@ -241,10 +210,6 @@ local function buy_item_n(player, pos, n)
 
 	if reason_why_not then
 		minetest.chat_send_player(player_name, "Exchange failed: " .. reason_why_not)
-	end
-
-	if not is_unlimited then
-		transfer_wifi_storage(meta, shop_inv, pay_name, give_name, exchange_possible, player_name)
 	end
 end
 
