@@ -20,8 +20,10 @@ dofile(smartshop.modpath .. "/util.lua")
 dofile(smartshop.modpath .. "/metadata.lua")
 
 if smartshop.settings.has_currency and smartshop.settings.change_currency then
+    smartshop.log("action", "currency changing enabled")
     dofile(smartshop.modpath .. "/currency.lua")
 else
+    smartshop.log("action", "currency changing disabled")
     dofile(smartshop.modpath .. "/currency_no.lua")
 end
 dofile(smartshop.modpath .. "/mesecons.lua")

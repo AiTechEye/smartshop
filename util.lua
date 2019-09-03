@@ -127,3 +127,33 @@ function smartshop.util.round(x)
     end
 end
 
+function smartshop.util.clone_tmp_inventory(inv_name, src_inv, src_list_name)
+    local tmp_inv = minetest.create_detached_inventory(inv_name, {
+        allow_move = function(inv, from_list, from_index, to_list, to_index, count, player) return count end,
+        allow_put = function(inv, listname, index, stack, player) return stack:get_size() end,
+        allow_take = function(inv, listname, index, stack, player) return stack:get_size() end,
+    })
+
+    for name, _ in pairs(src_inv:get_lists()) do
+        if not tmp_inv:is_empty(name) or tmp_inv:get_size(name) ~= 0 then
+            smartshop.log("error", "attempt to re-use existing temporary inventory %s", inv_name)
+            return
+        end
+    end
+
+    if src_list_name then
+        tmp_inv:set_size(src_list_name, src_inv:get_size(src_list_name))
+        tmp_inv:set_list(src_list_name, src_inv:get_list(src_list_name))
+    else
+        for name, list in pairs(src_inv:get_lists()) do
+            tmp_inv:set_size(name, src_inv:get_size(name))
+            tmp_inv:set_list(name, list)
+        end
+    end
+
+    return tmp_inv
+end
+
+function smartshop.util.delete_tmp_inventory(inv_name)
+    minetest.remove_detached_inventory(inv_name)
+end

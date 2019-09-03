@@ -1,26 +1,29 @@
--- collect up available minegeld amounts
-
 local Amount = {}
+Amount.__index = Amount
 local AmountMeta = {}
 
-function AmountMeta.__call(whole, cents)
+function AmountMeta:__call(whole, cents)
     local amount = setmetatable({}, Amount)
     amount.whole = whole or 0
     amount.cents = cents or 0
     return amount
 end
 
+setmetatable(Amount, AmountMeta)
+
+function Amount:to_cents()
+    return self.whole * 100 + self.cents
+end
+
 function Amount.from_cents(cents)
     return Amount(math.floor(cents / 100), cents % 100)
 end
-
-setmetatable(Amount, AmountMeta)
 
 function Amount.__add(arg1, arg2)
     local whole = arg1.whole + arg2.whole
     local cents = arg1.cents + arg2.cents
     whole = whole + math.floor(cents / 100)
-    cents = cents % 100
+    cents = math.floor(cents % 100)
     return Amount(whole, cents)
 end
 
@@ -28,7 +31,7 @@ function Amount.__mul(amount, multiple)
     local whole = amount.whole * multiple
     local cents = amount.cents * multiple
     whole = whole + math.floor(cents / 100)
-    cents = cents % 100
+    cents = math.floor(cents % 100)
     return Amount(whole, cents)
 end
 
@@ -48,17 +51,7 @@ function Amount.__le(a, b)
     return a.whole < b.whole or (a.whole == b.whole and a.cents <= b.cents)
 end
 
-function Amount:to_cents()
-    return self.whole * 100 + self.cents
-end
-
-function Amount:divides(other)
-    local i = self:as_integer()
-    local j = other:as_integer()
-    return (j % i) == 0
-end
-
-
+local zero_minegeld = Amount(0, 0)
 
 local known_currency = {
     ["currency:minegeld_cent_5"]=Amount(0, 5),
@@ -72,16 +65,17 @@ local known_currency = {
 }
 
 local available_currency = {}
-for name, value in pairs(known_currency) do
-    if minetest.registered_items[known] then
-        available_currency[name] = value
+for name, amount in pairs(known_currency) do
+    if minetest.registered_items[name] then
+        available_currency[name] = amount
+        smartshop.log("action", "available currency: %s=%q", name, tostring(amount))
     end
 end
 
 local function sum_stack(stack)
     local name = stack:get_name()
     local count = stack:get_count()
-    local amount = available_currency[name]
+    local amount = available_currency[name] or zero_minegeld
     return amount * count
 end
 
@@ -108,14 +102,14 @@ local function sort_decreasing(currency_name_a, currency_name_b)
     return available_currency[currency_name_b] < available_currency[currency_name_a]
 end
 
-local function get_src_counts_by_denomination(src_inv, src_list_name)
+local function get_currency_count_by_name(src_inv, src_list_name)
     local src_counts_by_denomination = {}
     local src_inv_size = src_inv:get_size(src_list_name)
     for index = 1, src_inv_size do
         local src_inv_stack = src_inv:get_stack(src_list_name, index)
         local src_inv_stack_name = src_inv_stack:get_name()
         if available_currency[src_inv_stack_name] then
-            src_counts_by_denomination[src_inv_stack_name] = (src_counts_by_denomination[src_inv_stack_name] or 0) + src_inv_stack:count()
+            src_counts_by_denomination[src_inv_stack_name] = (src_counts_by_denomination[src_inv_stack_name] or 0) + src_inv_stack:get_count()
         end
     end
     return src_counts_by_denomination
@@ -129,45 +123,24 @@ local function make_change(change_cents)
         local cents = amount:to_cents()
         if change_cents % cents == 0 and cents > value then
             denomination = name
+            value = cents
         end
     end
     if denomination then
-        return ItemStack({name=denomination, count=change_cents / cents})
+        return ItemStack({name=denomination, count=change_cents / value})
     end
 end
 
-function smartshop.can_move_currency(currency_stack, src_inv, src_list_name, trade_stack)
-    --[[
-        This function implements a quick-and-dirty change-making algorithm.
-        It can return "false" when change-making is actually technically possible,
-        but the "correct" algorithm is NP-hard.
-
-        If currency can be moved, it returns true, and a list of stacks to remove from the source
-        inventory, and a stack (or nil) to add to the source inventory
-
-        Note: The dest inventory will always get the src_currency_stack, and that is handled
-        outside (after) this function
-    ]]--
-    if not src_list_name then src_list_name = "main" end
-    local stack_amount = sum_stack(currency_stack)
-    if stack_amount > sum_inv(src_inv, src_list_name) then
-        -- quick check: does the person even have enough money?
-        smartshop.log("action", "cannot change currency: player doesn't have enough money") -- TODO remove debug
-        return false
-    end
-
-    -- count up the currency in the source inv
-    local src_counts_by_denomination = get_src_counts_by_denomination(src_inv, src_list_name)
-
-    -- take as much of the source money as possible, without breaking bills or going over the required amount
+local function get_whole_counts(currency_count_by_name, pay_amount)
     local currency_to_take = {}
-    local remaining_cents = stack_amount:to_cents()
-    for currency_name, count in smartshop.util.pairs_by_keys(src_counts_by_denomination, sort_decreasing) do
+    local remaining_cents  = pay_amount:to_cents()
+
+    for currency_name, count in smartshop.util.pairs_by_keys(currency_count_by_name, sort_decreasing) do
         if remaining_cents == 0 then
             break
         end
         local currency_amount = available_currency[currency_name]
-        local currency_cents  = currency_amount
+        local currency_cents  = currency_amount:to_cents()
         local required_count  = math.floor(remaining_cents / currency_cents)
         if required_count > 0 then
             local count_to_use = math.min(count, required_count)
@@ -176,85 +149,208 @@ function smartshop.can_move_currency(currency_stack, src_inv, src_list_name, tra
 
             -- update src_counts_by_denomination
             if count_to_use == count then
-                src_counts_by_denomination[currency_name] = nil
+                currency_count_by_name[currency_name] = nil
             else
-                src_counts_by_denomination[currency_name] = count - count_to_use
+                currency_count_by_name[currency_name] = count - count_to_use
             end
         end
     end
+    return currency_to_take, remaining_cents
+end
 
-    local item_to_give
-    if remaining_cents ~= 0 then
-        -- we still need to make up some value; try to break some bills
-
-        -- find the smallest bill that exceeds the amount we need
-        local currency_to_use
-        for currency_name, _ in smartshop.util.pairs_by_keys(src_counts_by_denomination, sort_decreasing) do
-            local currency_amount = available_currency[currency_name]
-            local currency_cents  = currency_amount
-            if currency_cents >= remaining_cents then
-                currency_to_use = currency_name
-                break
-            end
+local function get_change_to_give(currency_count_by_name, currency_to_take, remaining_cents)
+    -- find the smallest bill that exceeds the amount we need
+    local currency_to_use
+    for currency_name, _ in smartshop.util.pairs_by_keys(currency_count_by_name, sort_increasing) do
+        local currency_amount = available_currency[currency_name]
+        local currency_cents  = currency_amount:to_cents()
+        if currency_cents >= remaining_cents then
+            currency_to_use = currency_name
+            break
         end
-
+    end
+    if not currency_to_use then
         -- didn't find any currency to use
-        if not currency_to_use then
-            smartshop.log("action", "cannot change currency: could not find bill to break") -- TODO remove debug
-            return false
-        end
-        currency_to_take[currency_to_use] = currency_to_take[currency_to_use] + 1
-        available_currency[currency_to_use] = available_currency[currency_to_use] - 1
-
-        local change_cents = available_currency[currency_to_use]:to_cents() - remaining_cents
-        remaining_cents = 0
-        item_to_give = make_change(change_cents)
-
-        -- can't make change for some reason? should always be possible
-        if not item_to_give then
-            smartshop.log("action", "cannot change currency: couldn't make change") -- TODO remove debug
-            return false
-        end
-    end
-
-    local items_to_take = {}
-    for name, count in pairs(currency_to_take) do
-        table.insert(items_to_take, ItemStack(name, count))
-    end
-
-    -- create a temporary copy of the src_inv to check that we can take the determined bills, give change, and still give the exchanged item
-    local src_inv_copy = minetest.create_detached_inventory("smartshop_tmp_src_inv", {
-        allow_move = function(inv, from_list, from_index, to_list, to_index, count, player) return count end,
-        allow_put = function(inv, listname, index, stack, player) return stack:get_size() end,
-        allow_take = function(inv, listname, index, stack, player) return stack:get_size() end,
-    })
-    src_inv_copy:set_size(src_list_name, src_inv:get_size(src_list_name))
-    src_inv_copy:set_list(src_list_name, src_inv:get_list(src_list_name))
-
-    for _, item_stack in ipairs(items_to_take) do
-        local removed = src_inv_copy:remove_item(src_list_name, item_stack)
-        if removed:get_size() ~= item_stack:get_size() then
-            smartshop.log("action", "cannot change currency: algorithm error: can't find items to remove from tmp inventory...") -- TODO remove debug
-            return false
-        end
-    end
-
-    if item_to_give then
-        local leftover = src_inv_copy:add_item(src_list_name, item_to_give)
-        if leftover:get_size() ~= 0 then
-            smartshop.log("action", "cannot change currency: no room in inventory for change") -- TODO remove debug
-            return false
-        end
-    end
-
-    -- is there still room in the inventory for the acquired item?
-    local leftover = src_inv_copy:add_item(src_list_name, trade_stack)
-    if leftover:get_size() ~= 0 then
-        smartshop.log("action", "cannot change currency: no room in inventory for purchased item") -- TODO remove debug
         return false
     end
+    -- update counts
+    currency_to_take[currency_to_use]       = (currency_to_take[currency_to_use] or 0) + 1
+    currency_count_by_name[currency_to_use] = currency_count_by_name[currency_to_use] - 1
+    local change_cents                      = available_currency[currency_to_use]:to_cents() - remaining_cents
+    return true, make_change(change_cents)
+end
 
-    minetest.remove_detached_inventory("smartshop_tmp_src_inv")
+local function get_items_to_take(currency_to_take)
+    local items_to_take = {}
+    for name, count in pairs(currency_to_take) do
+        local stack_to_take = ItemStack({name=name, count=count})
+        table.insert(items_to_take, stack_to_take)
+    end
+    return items_to_take
+end
 
-    return true, items_to_take, item_to_give
+function smartshop.can_exchange_currency(player_inv, shop_inv, pay_stack, give_stack, is_unlimited)
+    --[[
+        This function implements a quick-and-dirty change-making algorithm.
+        It can return "false" when change-making is actually technically possible,
+        but the "correct" algorithm is NP-hard (and even more complicated than this mess).
+
+        pay_stack is assumed to be valid currency. It is also assumed that a check of
+        whether the player had the exact payment was done before calling this method.
+
+        If currency can be moved, it returns true, and a list of stacks to remove from the source
+        inventory, and a stack (or nil) of change to add to the player's inventory
+
+        Note: The shop inventory will always get the exact pay_stack requested.
+    ]]--
+    local pay_amount = sum_stack(pay_stack)
+    if pay_amount > sum_inv(player_inv, "main") then
+        -- quick check: does the person even have enough money?
+        return false, nil, nil, "you lack sufficient payment"
+    end
+
+    -- count up the currency in the source inv
+    local currency_count_by_name = get_currency_count_by_name(player_inv, "main")
+
+    -- take as much of the source money as possible, without breaking bills or going over the required amount
+    local currency_to_take, remaining_cents = get_whole_counts(currency_count_by_name, pay_amount)
+
+    local change_to_give
+    if remaining_cents ~= 0 then
+        local made_change
+        made_change, change_to_give = get_change_to_give(currency_count_by_name, currency_to_take, remaining_cents)
+        if not made_change then
+            return false, nil, nil, "failed to make change: no bill large enough"
+        elseif not change_to_give then
+            -- can't make change for some reason? should always be possible
+            return false, nil, nil, "failed to make change"
+        end
+        remaining_cents = 0
+    end
+
+    local items_to_take   = get_items_to_take(currency_to_take)
+
+    -- create a temporary copy of the src_inv to check that we can take the determined bills, give change, and still give the exchanged item
+    local player_inv_copy = smartshop.util.clone_tmp_inventory("smartshop_tmp_player_inv", player_inv, "main")
+    local function helper()
+        for _, item_stack in ipairs(items_to_take) do
+            local removed = player_inv_copy:remove_item("main", item_stack)
+            if removed:get_count() ~= item_stack:get_count() then
+                return false, "unknown error"
+            end
+        end
+        if change_to_give then
+            local leftover = player_inv_copy:add_item("main", change_to_give)
+            if leftover:get_count() ~= 0 then
+                return false, "cannot change currency: no room in inventory for change"
+            end
+        end
+        -- is there still room in the inventory for the acquired item?
+        local leftover = player_inv_copy:add_item("main", give_stack)
+        if leftover:get_count() ~= 0 then
+            return false, "cannot change currency: no room in inventory for purchased item"
+        end
+        return true
+    end
+    local rv, message = helper()
+    smartshop.util.delete_tmp_inventory("smartshop_tmp_player_inv")
+    if not rv then
+        return rv, nil, nil, message
+    end
+
+    if not is_unlimited then
+        local shop_inv_copy = smartshop.util.clone_tmp_inventory("smartshop_tmp_shop_inv", shop_inv, "main")
+        function helper()
+            local sold_thing = shop_inv_copy:remove_item("main", give_stack)
+            if sold_thing:get_count() < give_stack:get_count() then
+				return false, ("%s is sold out"):format(sold_thing:get_name())
+            end
+			local leftover = shop_inv_copy:add_item("main", pay_stack)
+			if not leftover:is_empty() then
+				return false, "the shop is full"
+			end
+            return true
+        end
+        rv, message = helper()
+        smartshop.util.delete_tmp_inventory("smartshop_tmp_shop_inv")
+        if not rv then
+            return rv, nil, nil, message
+        end
+    end
+
+    return true, items_to_take, change_to_give
+end
+
+function smartshop.exchange_currency(player_inv, shop_inv, items_to_take, item_to_give, pay_stack, give_stack, is_unlimited)
+	if is_unlimited then
+        for _, item_to_take in pairs(items_to_take) do
+            local removed = player_inv:remove_item("main", item_to_take)
+            if removed:get_count() < item_to_take:get_count() then
+                smartshop.log(
+                        "error",
+                        "(ec) failed to extract full payment using creative shop (missing: %s)",
+                        removed:to_string()
+                )
+            end
+        end
+		local leftover = player_inv:add_item("main", item_to_give)
+		if not leftover:is_empty() then
+			smartshop.log(
+				"error",
+				"(ec) player did not receive full *change* amount when using creative shop (leftover: %s)",
+				leftover:to_string()
+			)
+		end
+        leftover = player_inv:add_item("main", give_stack)
+		if not leftover:is_empty() then
+			smartshop.log(
+				"error",
+				"(ec) player did not receive full amount when using creative shop (leftover: %s)",
+				leftover:to_string()
+			)
+		end
+	else
+        for _, item_to_take in pairs(items_to_take) do
+            local payment    = player_inv:remove_item("main", item_to_take)
+            if payment:get_count() < item_to_take:get_count() then
+                smartshop.log(
+                    "error",
+                    "(ec) failed to extract full purchase from shop (missing: %s)",
+                    payment:to_string()
+                )
+            end
+        end
+		local sold_thing = shop_inv:remove_item("main", give_stack)
+		if sold_thing:get_count() < give_stack:get_count() then
+			smartshop.log(
+				"error",
+				"(ec) failed to extract full payment (missing: %s)",
+				sold_thing:to_string()
+			)
+		end
+		local leftover   = player_inv:add_item("main", sold_thing)
+		if not leftover:is_empty() then
+			smartshop.log(
+				"error",
+				"(ec) player did not receive full amount from shop (leftover: %s)",
+				leftover:to_string()
+			)
+		end
+        leftover   = player_inv:add_item("main", item_to_give)
+		if not leftover:is_empty() then
+			smartshop.log(
+				"error",
+				"(ec) player did not receive full *change* amount (leftover: %s)",
+				leftover:to_string()
+			)
+		end
+		leftover = shop_inv:add_item("main", pay_stack)
+		if not leftover:is_empty() then
+			smartshop.log(
+				"error",
+				"(ec) shop did not receive full payment (leftover: %s)",
+				leftover:to_string()
+			)
+		end
+	end
 end

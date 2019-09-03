@@ -1,7 +1,7 @@
 smartshop.settings = {}
 
 smartshop.settings.has_mesecon = minetest.global_exists("mesecon")
-smartshop.settings.has_currency = minetest.global_exists("currency")
+smartshop.settings.has_currency = minetest.get_modpath("currency")
 
 local settings = minetest.settings
 

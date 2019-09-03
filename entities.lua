@@ -1,13 +1,5 @@
 local debug = false
 local cache = {}
--- https://github.com/minetest/minetest/blob/master/doc/lua_api.txt#L5876
-
---[[
-TODO: PROBLEMS
-titanium:titanium_in_ground
-titanium:glass
-tubelib_addons3:pushing_chest
-]]--
 
 local function get_image_from_tile(tile)
     if type(tile) == "string" then

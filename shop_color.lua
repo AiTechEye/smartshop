@@ -4,7 +4,7 @@ local function get_exchange_status(inv, slot)
     local give_key = "give"..slot
     local give_stack = inv:get_stack(give_key, 1)
 
-    if give_stack:is_empty() and pay_stack:is_empty() then
+    if give_stack:is_empty() or pay_stack:is_empty() then
         return "skip"
     elseif not inv:room_for_item("main", pay_stack) then
         return "full"

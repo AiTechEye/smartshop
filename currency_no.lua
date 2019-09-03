@@ -1,7 +1,3 @@
-function smartshop.is_currency()
-    return false
-end
-
-function smartshop.can_move_currency()
-    return false
-end
+function smartshop.is_currency() end
+function smartshop.can_exchange_currency() end
+function smartshop.exchange_currency() end
