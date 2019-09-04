@@ -49,7 +49,8 @@ local function get_info_lines(owner, shop_inv, inv_totals)
 			local buy   = math.floor(stock / count)
 			if buy ~= 0 then
 				local def         = give_stack:get_definition()
-				local description = def["description"]
+				local description = (def["description"] or ""):match("^[^\n]*")
+                if description == "" then description = name end
 				local message     = ("(%i) %s"):format(buy, description)
 				table.insert(lines, message)
 			end
