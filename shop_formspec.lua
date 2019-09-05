@@ -325,7 +325,7 @@ function smartshop.shop_receive_fields(player, pressed)
         end
     else
         smartshop.update_shop_info(pos)
-        smartshop.update_shop_display(pos, "update")
+        smartshop.update_shop_display(pos)
 		smartshop.update_shop_color(pos)
         smartshop.player_pos[player_name] = nil
     end

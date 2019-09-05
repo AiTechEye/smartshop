@@ -60,6 +60,8 @@ local function get_info_lines(owner, shop_inv, inv_totals)
 end
 
 function smartshop.update_shop_info(pos)
+    if not smartshop.is_smartshop(pos) then return end
+
     local shop_meta = minetest.get_meta(pos)
     local owner     = smartshop.get_owner(shop_meta)
 
@@ -140,6 +142,10 @@ local function remove_entities(pos)
 end
 
 function smartshop.update_shop_display(pos)
+    if not smartshop.is_smartshop(pos) then
+        return
+    end
+
     local param2      = minetest.get_node(pos).param2
     local dir         = element_dir[param2 + 1]
     if not dir then return end

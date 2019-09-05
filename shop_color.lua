@@ -25,15 +25,7 @@ function smartshop.update_shop_color(pos)
     empty : no exchanges possible because no more give items
     used  : pay items in main
     ]]--
-    local node = minetest.get_node(pos)
-    local cur_name = node.name
-    if (
-        cur_name ~= "smartshop:shop" and
-        cur_name ~= "smartshop:shop_full" and
-        cur_name ~= "smartshop:shop_empty" and
-        cur_name ~= "smartshop:shop_used" and
-        cur_name ~= "smartshop:shop_admin"
-    ) then
+    if not smartshop.is_smartshop(pos) then
         return
     end
     local shop_meta    = minetest.get_meta(pos)
@@ -79,7 +71,9 @@ function smartshop.update_shop_color(pos)
         to_swap = "smartshop:shop"
     end
 
-    if cur_name ~= to_swap then
+    local node = minetest.get_node(pos)
+    local node_name = node.name
+    if node_name ~= to_swap then
         minetest.swap_node(pos, {
             name = to_swap,
             param2 = node.param2

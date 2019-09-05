@@ -190,6 +190,23 @@ minetest.register_node("smartshop:shop_empty", smartshop_empty_def)
 minetest.register_node("smartshop:shop_used", smartshop_used_def)
 minetest.register_node("smartshop:shop_admin", smartshop_admin_def)
 
+smartshop.shop_node_names = {
+    "smartshop:shop",
+    "smartshop:shop_full",
+    "smartshop:shop_empty",
+    "smartshop:shop_used",
+    "smartshop:shop_admin"
+}
+
+function smartshop.is_smartshop(pos)
+    local node = minetest.get_node(pos)
+    local node_name = node.name
+    for _, name in ipairs(smartshop.shop_node_names) do
+        if name == node_name then return true end
+    end
+    return false
+end
+
 minetest.register_lbm({
     name              = "smartshop:repay_lost_stuff",
     nodenames         = {

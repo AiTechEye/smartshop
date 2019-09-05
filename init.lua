@@ -40,6 +40,8 @@ dofile(smartshop.modpath .. "/storage_formspec.lua")
 
 dofile(smartshop.modpath .. "/crafting.lua")
 
+dofile(smartshop.modpath .. "/tubelib.lua")
+
 
 minetest.register_on_player_receive_fields(function(player, form, pressed)
     if form == "smartshop.shop_showform" then
