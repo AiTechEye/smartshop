@@ -58,8 +58,10 @@ local known_currency = {
     ["currency:minegeld_cent_10"]=Amount(0, 10),
     ["currency:minegeld_cent_25"]=Amount(0, 25),
     ["currency:minegeld"]=Amount(1, 0),
+    ["currency:minegeld_2"]=Amount(2, 0),
     ["currency:minegeld_5"]=Amount(5, 0),
     ["currency:minegeld_10"]=Amount(10, 0),
+    ["currency:minegeld_20"]=Amount(20, 0),
     ["currency:minegeld_50"]=Amount(50, 0),
     ["currency:minegeld_100"]=Amount(100, 0),
 }
