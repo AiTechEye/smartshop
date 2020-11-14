@@ -511,6 +511,9 @@ on_construct = function(pos)
 		meta:get_inventory():set_size("give4", 1)
 		meta:get_inventory():set_size("pay4", 1)
 	end,
+on_punch = function(pos, node, player)
+		smartshop.update(pos, "update")
+	end,
 on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		smartshop.showform(pos,player)
 	end,
