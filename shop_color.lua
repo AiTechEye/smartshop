@@ -9,10 +9,10 @@ local function get_exchange_status(shop_inv, slot, send_inv, refill_inv)
         return "skip"
     elseif not (shop_inv:room_for_item("main", pay_stack) or (send_inv and send_inv:room_for_item("main", pay_stack))) then
         return "full"
-    elseif not (shop_inv:contains_item("main", give_stack) or (refill_inv and refill_inv:contains_item("main", give_stack))) then
-        return "empty"
     elseif shop_inv:contains_item("main", pay_stack) or (send_inv and send_inv:contains_item("main", pay_stack)) then
         return "used"
+    elseif not (shop_inv:contains_item("main", give_stack) or (refill_inv and refill_inv:contains_item("main", give_stack))) then
+        return "empty"
     else
         return "ignore"
     end
