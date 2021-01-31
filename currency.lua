@@ -1,69 +1,35 @@
-local Amount = {}
-Amount.__index = Amount
-local AmountMeta = {}
-
-function AmountMeta:__call(whole, cents)
-    local amount = setmetatable({}, Amount)
-    amount.whole = whole or 0
-    amount.cents = cents or 0
-    return amount
-end
-
-setmetatable(Amount, AmountMeta)
-
-function Amount:to_cents()
-    return self.whole * 100 + self.cents
-end
-
-function Amount.from_cents(cents)
-    return Amount(math.floor(cents / 100), cents % 100)
-end
-
-function Amount.__add(arg1, arg2)
-    local whole = arg1.whole + arg2.whole
-    local cents = arg1.cents + arg2.cents
-    whole = whole + math.floor(cents / 100)
-    cents = math.floor(cents % 100)
-    return Amount(whole, cents)
-end
-
-function Amount.__mul(amount, multiple)
-    local whole = amount.whole * multiple
-    local cents = amount.cents * multiple
-    whole = whole + math.floor(cents / 100)
-    cents = math.floor(cents % 100)
-    return Amount(whole, cents)
-end
-
-function Amount:__tostring()
-    return ('%i.%02i'):format(self.whole, self.cents)
-end
-
-function Amount.__eq(a, b)
-    return a.whole == b.whole and a.cents == b.cents
-end
-
-function Amount.__lt(a, b)
-    return a.whole < b.whole or (a.whole == b.whole and a.cents < b.cents)
-end
-
-function Amount.__le(a, b)
-    return a.whole < b.whole or (a.whole == b.whole and a.cents <= b.cents)
-end
-
-local zero_minegeld = Amount(0, 0)
+local zero_cents = 0
 
 local known_currency = {
-    ["currency:minegeld_cent_5"]=Amount(0, 5),
-    ["currency:minegeld_cent_10"]=Amount(0, 10),
-    ["currency:minegeld_cent_25"]=Amount(0, 25),
-    ["currency:minegeld"]=Amount(1, 0),
-    ["currency:minegeld_2"]=Amount(2, 0),
-    ["currency:minegeld_5"]=Amount(5, 0),
-    ["currency:minegeld_10"]=Amount(10, 0),
-    ["currency:minegeld_20"]=Amount(20, 0),
-    ["currency:minegeld_50"]=Amount(50, 0),
-    ["currency:minegeld_100"]=Amount(100, 0),
+    -- standard currency
+    ["currency:minegeld_cent_5"]=5,
+    ["currency:minegeld_cent_10"]=10,
+    ["currency:minegeld_cent_25"]=25,
+    ["currency:minegeld"]=100,
+    ["currency:minegeld_2"]=200,
+    ["currency:minegeld_5"]=500,
+    ["currency:minegeld_10"]=1000,
+    ["currency:minegeld_20"]=2000,
+    ["currency:minegeld_50"]=5000,
+    ["currency:minegeld_100"]=10000,
+
+    -- tunneler's abyss
+    ["currency:cent_1"]=1,
+    ["currency:cent_2"]=2,
+    ["currency:cent_5"]=5,
+    ["currency:cent_10"]=10,
+    ["currency:cent_20"]=20,
+    ["currency:cent_50"]=50,
+    ["currency:buck_1"]=100,
+    ["currency:buck_2"]=200,
+    ["currency:buck_5"]=500,
+    ["currency:buck_10"]=1000,
+    ["currency:buck_20"]=2000,
+    ["currency:buck_50"]=5000,
+    ["currency:buck_100"]=10000,
+    ["currency:buck_200"]=20000,
+    ["currency:buck_500"]=50000,
+    ["currency:buck_1000"]=100000,
 }
 
 local available_currency = {}
@@ -77,13 +43,13 @@ end
 local function sum_stack(stack)
     local name = stack:get_name()
     local count = stack:get_count()
-    local amount = available_currency[name] or zero_minegeld
+    local amount = available_currency[name] or zero_cents
     return amount * count
 end
 
 local function sum_inv(inv, list_name)
     local size = inv:get_size(list_name)
-    local total = Amount(0, 0)
+    local total = 0
     for index = 1, size do
         local stack = inv:get_stack(list_name, index)
         total = total + sum_stack(stack)
@@ -217,6 +183,7 @@ function smartshop.can_exchange_currency(player_inv, shop_inv, send_inv, refill_
     -- take as much of the source money as possible, without breaking bills or going over the required amount
     local currency_to_take, remaining_cents = get_whole_counts(currency_count_by_name, pay_amount)
 
+    -- if we haven't found enough whole currency units, try breaking up a bill
     local change_to_give
     if remaining_cents ~= 0 then
         local made_change
