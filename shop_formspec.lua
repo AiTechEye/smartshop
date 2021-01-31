@@ -11,13 +11,13 @@ end
 local function toggle_send(player_name, pos)
 	smartshop.add_storage[player_name] = { send = true, pos = pos }
 	minetest.after(wifi_link_time, expire_link, player_name, "send", pos)
-	minetest.chat_send_player(player_name, "Open a storage owned by you")
+	minetest.chat_send_player(player_name, "Open an external storage owned by you")
 end
 
 local function toggle_refill(player_name, pos)
 	smartshop.add_storage[player_name] = { refill = true, pos = pos }
 	minetest.after(wifi_link_time, expire_link, player_name, "refill", pos)
-	minetest.chat_send_player(player_name, "Open a storage owned by you")
+	minetest.chat_send_player(player_name, "Open an external storage owned by you")
 end
 
 local function toggle_limit(player, pos)
