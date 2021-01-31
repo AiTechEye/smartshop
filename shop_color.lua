@@ -1,3 +1,19 @@
+local function can_receive_payments(pay_stack, give_stack, shop_inv, send_inv)
+    local answer = shop_inv:room_for_item("main", pay_stack)
+
+    if (not answer) and shop_inv:contains_item("main", give_stack) then
+        local tmp_inv = smartshop.util.clone_tmp_inventory("tmp_can_exchange", shop_inv, "main")
+        tmp_inv:remove_item("main", give_stack)
+        answer = tmp_inv:room_for_item("main", pay_stack)
+        smartshop.util.delete_tmp_inventory("tmp_can_exchange")
+
+    elseif send_inv and send_inv:room_for_item("main", pay_stack) then
+        answer = true
+    end
+
+    return answer
+end
+
 local function get_exchange_status(shop_inv, slot, send_inv, refill_inv)
     local pay_key = "pay"..slot
     local pay_stack = shop_inv:get_stack(pay_key, 1)
@@ -7,7 +23,7 @@ local function get_exchange_status(shop_inv, slot, send_inv, refill_inv)
     -- TODO: this isn't quite correct, as it doesn't allow for stacks split between the shop and storage
     if give_stack:is_empty() or pay_stack:is_empty() then
         return "skip"
-    elseif not (shop_inv:room_for_item("main", pay_stack) or (send_inv and send_inv:room_for_item("main", pay_stack))) then
+    elseif not can_receive_payments(pay_stack, give_stack, shop_inv, send_inv) then
         return "full"
     elseif shop_inv:contains_item("main", pay_stack) or (send_inv and send_inv:contains_item("main", pay_stack)) then
         return "used"
