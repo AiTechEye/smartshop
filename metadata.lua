@@ -1,7 +1,7 @@
 local function get_meta(pos_or_meta)
     if type(pos_or_meta) == "userdata" then
         return pos_or_meta
-    elseif type(pos_or_meta) == "table" and pos_or_meta.x and pos_or_meta.y and pos_or_meta.z then
+    else
         return minetest.get_meta(pos_or_meta)
     end
 end
@@ -100,6 +100,16 @@ function smartshop.set_state(pos_or_meta, value)
     meta:set_int("state", value)
 end
 
+function smartshop.has_upgraded(pos_or_meta)
+    local meta = get_meta(pos_or_meta)
+    return meta:get("upgraded")
+end
+
+function smartshop.set_upgraded(pos_or_meta)
+    local meta = get_meta(pos_or_meta)
+    return meta:set_string("upgraded", "true")
+end
+
 -- when upgrading, sometimes we can't refund the player if their shop is full
 -- so, keep track of it
 function smartshop.set_refund(pos_or_meta, refund)
@@ -107,17 +117,12 @@ function smartshop.set_refund(pos_or_meta, refund)
     meta:set_string("refund", minetest.write_json(refund))
 end
 
-function smartshop.add_refund(pos_or_meta, refund)
-    local meta = get_meta(pos_or_meta)
-    local existing_refund = smartshop.get_refund(meta)
-    for item, count in pairs(refund) do
-        existing_refund[item] = (existing_refund[item] or 0) + count
-    end
-    smartshop.set_refund(meta, existing_refund)
-end
-
 function smartshop.get_refund(pos_or_meta)
     local meta = get_meta(pos_or_meta)
     local refund = meta:get_string("refund")
-    return minetest.parse_json(refund) or {}
+    if refund == "" then
+        return {}
+    else
+        return minetest.parse_json(refund)
+    end
 end
