@@ -99,3 +99,25 @@ function smartshop.set_state(pos_or_meta, value)
     local meta = get_meta(pos_or_meta)
     meta:set_int("state", value)
 end
+
+-- when upgrading, sometimes we can't refund the player if their shop is full
+-- so, keep track of it
+function smartshop.set_refund(pos_or_meta, refund)
+    local meta = get_meta(pos_or_meta)
+    meta:set_string("refund", minetest.write_json(refund))
+end
+
+function smartshop.add_refund(pos_or_meta, refund)
+    local meta = get_meta(pos_or_meta)
+    local existing_refund = smartshop.get_refund(meta)
+    for item, count in pairs(refund) do
+        existing_refund[item] = (existing_refund[item] or 0) + count
+    end
+    smartshop.set_refund(meta, existing_refund)
+end
+
+function smartshop.get_refund(pos_or_meta)
+    local meta = get_meta(pos_or_meta)
+    local refund = meta:get_string("refund")
+    return minetest.parse_json(refund) or {}
+end
