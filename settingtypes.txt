@@ -6,3 +6,6 @@ smartshop.wifi_link_time (Smartshop storage link time) int 30 0 3600
 
 # Enable currency changing (experimental feature).
 smartshop.change_currency (Enable currency changing) bool true
+
+# If set to false, this will disable giving refunds for the "give" and "pay" slots in a shop when upgrading from the main fork.
+smartshop.enable_refund (Enable refunds on upgrading from the main fork) bool true
