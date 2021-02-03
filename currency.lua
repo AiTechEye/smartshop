@@ -88,10 +88,9 @@ local function make_change(change_cents)
     local denomination
     local value = 0
     for name, amount in pairs(available_currency) do
-        local cents = amount:to_cents()
-        if change_cents % cents == 0 and cents > value then
+        if change_cents % amount == 0 and amount > value then
             denomination = name
-            value = cents
+            value = amount
         end
     end
     if denomination then
@@ -101,19 +100,18 @@ end
 
 local function get_whole_counts(currency_count_by_name, pay_amount)
     local currency_to_take = {}
-    local remaining_cents  = pay_amount:to_cents()
+    local remaining_amount = pay_amount
 
     for currency_name, count in smartshop.util.pairs_by_keys(currency_count_by_name, sort_decreasing) do
-        if remaining_cents == 0 then
+        if remaining_amount == 0 then
             break
         end
         local currency_amount = available_currency[currency_name]
-        local currency_cents  = currency_amount:to_cents()
-        local required_count  = math.floor(remaining_cents / currency_cents)
+        local required_count  = math.floor(remaining_amount / currency_amount)
         if required_count > 0 then
             local count_to_use = math.min(count, required_count)
             currency_to_take[currency_name] = count_to_use
-            remaining_cents = remaining_cents - (currency_cents * count_to_use)
+            remaining_amount = remaining_amount - (currency_amount * count_to_use)
 
             -- update src_counts_by_denomination
             if count_to_use == count then
@@ -123,7 +121,7 @@ local function get_whole_counts(currency_count_by_name, pay_amount)
             end
         end
     end
-    return currency_to_take, remaining_cents
+    return currency_to_take, remaining_amount
 end
 
 local function get_change_to_give(currency_count_by_name, currency_to_take, remaining_cents)
@@ -131,8 +129,7 @@ local function get_change_to_give(currency_count_by_name, currency_to_take, rema
     local currency_to_use
     for currency_name, _ in smartshop.util.pairs_by_keys(currency_count_by_name, sort_increasing) do
         local currency_amount = available_currency[currency_name]
-        local currency_cents  = currency_amount:to_cents()
-        if currency_cents >= remaining_cents then
+        if currency_amount >= remaining_cents then
             currency_to_use = currency_name
             break
         end
@@ -144,7 +141,7 @@ local function get_change_to_give(currency_count_by_name, currency_to_take, rema
     -- update counts
     currency_to_take[currency_to_use]       = (currency_to_take[currency_to_use] or 0) + 1
     currency_count_by_name[currency_to_use] = currency_count_by_name[currency_to_use] - 1
-    local change_cents                      = available_currency[currency_to_use]:to_cents() - remaining_cents
+    local change_cents                      = available_currency[currency_to_use] - remaining_cents
     return true, make_change(change_cents)
 end
 
