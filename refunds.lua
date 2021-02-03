@@ -4,7 +4,7 @@ placeholders, and not actual inventory slots, upgrading would cause the items
 stored in those slots to be lost.else
 
 If enabled (by default), this LBM will refund those items, even in the event
-that the shop is currently full. 
+that the shop is currently full.
 --]]
 
 
