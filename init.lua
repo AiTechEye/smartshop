@@ -1,6 +1,6 @@
 smartshop = {}
 smartshop.redo = true
-smartshop.version = "1.0.0"
+smartshop.version = "20210207"
 
 local modname = minetest.get_current_modname()
 smartshop.modname = modname
@@ -12,7 +12,7 @@ function smartshop.log(level, message, ...)
 end
 
 smartshop.player_pos = {}
-smartshop.add_storage = {}
+smartshop.add_storage = {}  -- used for linking shops to external storage
 
 dofile(smartshop.modpath .. "/settings.lua")
 dofile(smartshop.modpath .. "/util.lua")
