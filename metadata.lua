@@ -117,6 +117,11 @@ function smartshop.set_refund(pos_or_meta, refund)
     meta:set_string("refund", minetest.write_json(refund))
 end
 
+function smartshop.remove_refund(pos_or_meta)
+    local meta = get_meta(pos_or_meta)
+    meta:set_string("refund", "")
+end
+
 function smartshop.get_refund(pos_or_meta)
     local meta = get_meta(pos_or_meta)
     local refund = meta:get_string("refund")

@@ -36,6 +36,8 @@ if smartshop.settings.enable_refund then
                 end
                 if not smartshop.util.table_is_empty(unrefunded) then
                     smartshop.set_refund(meta, unrefunded)
+                else
+                    smartshop.remove_refund(meta)
                 end
 
             else
@@ -60,6 +62,8 @@ if smartshop.settings.enable_refund then
                 end
                 if not smartshop.util.table_is_empty(unrefunded) then
                     smartshop.set_refund(meta, unrefunded)
+                else
+                    smartshop.remove_refund(meta)
                 end
                 smartshop.set_upgraded(meta)
             end
