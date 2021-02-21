@@ -129,7 +129,7 @@ local function can_dig(pos, player)
     local inv   = smartshop.get_inventory(meta)
     local owner = smartshop.get_owner(meta)
     if (owner == "" or smartshop.util.can_access(player, pos)) and inv:is_empty("main") then
-        smartshop.clear_shop_display(pos)
+        smartshop.clear_shop_entities(pos)
         return true
     end
 end

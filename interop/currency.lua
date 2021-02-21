@@ -1,4 +1,12 @@
-local zero_cents = 0
+if not (smartshop.settings.has_currency and smartshop.settings.change_currency) then
+    smartshop.log("action", "currency changing disabled")
+    function smartshop.is_currency() end
+    function smartshop.can_exchange_currency() end
+    function smartshop.exchange_currency() end
+    return
+end
+
+smartshop.log("action", "currency changing enabled")
 
 local known_currency = {
     -- standard currency
@@ -43,7 +51,7 @@ end
 local function sum_stack(stack)
     local name = stack:get_name()
     local count = stack:get_count()
-    local amount = available_currency[name] or zero_cents
+    local amount = available_currency[name] or 0
     return amount * count
 end
 
@@ -156,17 +164,19 @@ end
 
 function smartshop.can_exchange_currency(player_inv, shop_inv, send_inv, refill_inv, pay_stack, give_stack, is_unlimited)
     --[[
-        This function implements a quick-and-dirty change-making algorithm.
-        It can return "false" when change-making is actually technically possible,
+        this function implements a quick-and-dirty change-making algorithm.
+        it can return "false" when change-making is actually technically possible,
         but the "correct" algorithm is NP-hard (and even more complicated than this mess).
+        https://en.wikipedia.org/wiki/Change-making_problem
 
         pay_stack is assumed to be valid currency. It is also assumed that a check of
         whether the player had the exact payment was done before calling this method.
 
-        If currency can be moved, it returns true, and a list of stacks to remove from the source
+        if currency can be moved, it returns true, and a list of stacks to remove from the source
         inventory, and a stack (or nil) of change to add to the player's inventory
 
-        Note: The shop inventory will always get the exact pay_stack requested.
+        note: The shop inventory will always get the exact pay_stack requested, no matter
+        how change is made.
     ]]--
     local pay_amount = sum_stack(pay_stack)
     if pay_amount > sum_inv(player_inv, "main") then

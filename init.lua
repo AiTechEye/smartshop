@@ -1,6 +1,6 @@
 smartshop = {}
 smartshop.redo = true
-smartshop.version = "20210207"
+smartshop.version = "20210220.0"
 
 local modname = minetest.get_current_modname()
 smartshop.modname = modname
@@ -19,14 +19,9 @@ dofile(smartshop.modpath .. "/util.lua")
 
 dofile(smartshop.modpath .. "/metadata.lua")
 
-if smartshop.settings.has_currency and smartshop.settings.change_currency then
-    smartshop.log("action", "currency changing enabled")
-    dofile(smartshop.modpath .. "/currency.lua")
-else
-    smartshop.log("action", "currency changing disabled")
-    dofile(smartshop.modpath .. "/currency_no.lua")
-end
-dofile(smartshop.modpath .. "/mesecons.lua")
+-- interop that affects the API
+dofile(smartshop.modpath .. "/interop/currency.lua")
+dofile(smartshop.modpath .. "/interop/mesecons.lua")
 
 dofile(smartshop.modpath .. "/entities.lua")
 
@@ -40,7 +35,9 @@ dofile(smartshop.modpath .. "/storage_formspec.lua")
 
 dofile(smartshop.modpath .. "/crafting.lua")
 
-dofile(smartshop.modpath .. "/tubelib.lua")
+-- interop that doesn't affect the API
+dofile(smartshop.modpath .. "/interop/pipeworks.lua")
+dofile(smartshop.modpath .. "/interop/tubelib.lua")
 
 dofile(smartshop.modpath .. "/refunds.lua")
 

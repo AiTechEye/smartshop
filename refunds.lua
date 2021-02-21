@@ -1,10 +1,13 @@
 --[[
-Because this fork turns the "give" and "pay" lines in the shop inventory into
-placeholders, and not actual inventory slots, upgrading would cause the items
-stored in those slots to be lost.else
+because this fork turns the "give" and "pay" lines in the shop inventory into
+placeholders, and not actual inventory slots, upgrading causes the items
+stored in those slots to be lost.
 
-If enabled (by default), this LBM will refund those items, even in the event
-that the shop is currently full.
+if enabled (by default), this LBM will refund those items, even in the event
+that the shop is currently full, by waiting until there's available space.
+
+the items can still be lost, though, if the player empties the shop and then
+breaks the node, before the LBM has been run.
 --]]
 
 
