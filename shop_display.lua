@@ -28,14 +28,14 @@ local function get_info_lines(owner, shop_inv, inv_totals)
 			local name  = give_stack:get_name()
 	        local count = give_stack:get_count()
 			local stock = inv_totals[name] or 0
-			local buy   = math.floor(stock / count)
-			if buy ~= 0 then
+			local buy_count = math.floor(stock / count)
+			if buy_count ~= 0 then
 				local def         = give_stack:get_definition()
 				local description = def.short_description or (def.description or ""):match("^[^\n]*")
                 if not description or description == "" then
                     description = name
                 end
-				local message     = ("(%i) %s"):format(buy, description)
+				local message     = ("(%i) %s"):format(buy_count, description)
 				table.insert(lines, message)
 			end
 		end
@@ -68,7 +68,7 @@ function smartshop.update_shop_info(pos)
     if #lines == 1 then
         smartshop.set_infotext(shop_meta, "(Smartshop by %s)\nThis shop is empty.", owner)
     else
-        smartshop.set_infotext(shop_meta, table.concat(lines, "\n"))
+        smartshop.set_infotext(shop_meta, table.concat(lines, "\n"):gsub("%%", "%%%%"))
     end
 end
 
