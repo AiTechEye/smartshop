@@ -80,9 +80,17 @@ local function get_image(item)
 
     local image
     local tiles = def.tiles or def.tile_images
+    local inventory_image = def.inventory_image
 
-    if def.inventory_image and def.inventory_image ~= "" then
-        image = def.inventory_image
+    if inventory_image and inventory_image ~= "" then
+        if type(inventory_image) == "string" then
+            image = inventory_image
+        elseif type(inventory_image) == "table" and #inventory_image == 1 and type(inventory_image[1]) == "string" then
+            image = inventory_image[1]
+        else
+            smartshop.log("warning", "could not decode inventory image for %s", item)
+            image = ""  -- UNKNOWN
+        end
 
     elseif tiles then
         if type(tiles) == "string" then
