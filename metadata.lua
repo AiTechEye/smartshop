@@ -6,12 +6,12 @@ local function get_meta(pos_or_meta)
     end
 end
 
-function smartshop.is_creative(pos_or_meta)
+function smartshop.is_admin(pos_or_meta)
     local meta = get_meta(pos_or_meta)
     return meta:get_int("creative") == 1
 end
 
-function smartshop.set_creative(pos_or_meta, value)
+function smartshop.set_admin(pos_or_meta, value)
     local meta = get_meta(pos_or_meta)
     meta:set_int("creative", value and 1 or 0)
 end

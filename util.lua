@@ -13,11 +13,8 @@ end
 
 smartshop.util.pos_to_string = minetest.pos_to_string
 
-function smartshop.util.player_is_creative(player_name)
-    return (
-        minetest.check_player_privs(player_name, { creative = true }) or
-        minetest.check_player_privs(player_name, { give = true })
-    )
+function smartshop.util.player_is_admin(player_name)
+    return minetest.check_player_privs(player_name, {[smartshop.settings.admin_shop_priv] = true})
 end
 
 function smartshop.util.can_access(player, pos)

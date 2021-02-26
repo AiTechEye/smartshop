@@ -25,11 +25,11 @@ end
 local function after_place_node(pos, placer)
     local shop_meta   = minetest.get_meta(pos)
     local player_name = placer:get_player_name()
-    local is_creative = smartshop.util.player_is_creative(player_name) and 1 or 0
+    local is_admin = smartshop.util.player_is_admin(player_name) and 1 or 0
     smartshop.set_owner(shop_meta, player_name)
     smartshop.set_infotext(shop_meta, ("Shop by: %s"):format(player_name))
-    smartshop.set_creative(shop_meta, is_creative)
-    smartshop.set_unlimited(shop_meta, is_creative)
+    smartshop.set_admin(shop_meta, is_admin)
+    smartshop.set_unlimited(shop_meta, is_admin)
     smartshop.update_shop_color(pos)
 end
 

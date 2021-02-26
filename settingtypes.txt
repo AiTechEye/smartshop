@@ -9,3 +9,6 @@ smartshop.change_currency (Enable currency changing) bool true
 
 # If set to false, this will disable giving refunds for the "give" and "pay" slots in a shop when upgrading from the main fork.
 smartshop.enable_refund (Enable refunds on upgrading from the main fork) bool true
+
+# A privilege which allows the player to run admin shops
+smartshop.admin_shop_privs (Privs for admin shops) string smartshop_admin

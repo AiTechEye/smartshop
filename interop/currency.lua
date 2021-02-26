@@ -284,16 +284,16 @@ function smartshop.exchange_currency(player_inv, shop_inv, send_inv, refill_inv,
         for _, item_to_take in pairs(items_to_take) do
             local removed = player_inv:remove_item("main", item_to_take)
             if removed:get_count() < item_to_take:get_count() then
-                smartshop.log("error", "(ec) failed to extract full payment using creative shop (missing: %s)", removed:to_string())
+                smartshop.log("error", "(ec) failed to extract full payment using admin shop (missing: %s)", removed:to_string())
             end
         end
 		local leftover = player_inv:add_item("main", item_to_give)
 		if not leftover:is_empty() then
-			smartshop.log("error", "(ec) player did not receive full *change* amount when using creative shop (leftover: %s)", leftover:to_string())
+			smartshop.log("error", "(ec) player did not receive full *change* amount when using admin shop (leftover: %s)", leftover:to_string())
 		end
         leftover = player_inv:add_item("main", give_stack)
 		if not leftover:is_empty() then
-			smartshop.log("error", "(ec) player did not receive full amount when using creative shop (leftover: %s)", leftover:to_string())
+			smartshop.log("error", "(ec) player did not receive full amount when using admin shop (leftover: %s)", leftover:to_string())
 		end
 	else
         for _, item_to_take in pairs(items_to_take) do

@@ -118,11 +118,11 @@ local function process_purchase(player_inv, shop_inv, send_inv, refill_inv, pay_
 	if is_unlimited then
 		local removed = player_inv:remove_item("main", pay_stack)
 		if removed:get_count() < pay_stack:get_count() then
-			smartshop.log("error", "failed to extract full payment using creative shop (missing: %s)", removed:to_string())
+			smartshop.log("error", "failed to extract full payment using admin shop (missing: %s)", removed:to_string())
 		end
 		local leftover = player_inv:add_item("main", give_stack)
 		if not leftover:is_empty() then
-			smartshop.log("error", "player did not receive full amount when using creative shop (leftover: %s)", leftover:to_string())
+			smartshop.log("error", "player did not receive full amount when using admin shop (leftover: %s)", leftover:to_string())
 		end
 	else
 		local payment    = player_inv:remove_item("main", pay_stack)
@@ -213,7 +213,7 @@ local function buy_item_n(player, pos, n)
 	end
 end
 
-local function get_shop_owner_gui(spos, shop_meta, is_creative)
+local function get_shop_owner_gui(spos, shop_meta, is_admin)
     local gui          = "size[8,10]"
              .. "button_exit[6,0;1.5,1;customer;Customer]"
              .. "label[0,0.2;Item:]"
@@ -275,7 +275,7 @@ local function get_shop_owner_gui(spos, shop_meta, is_creative)
 	if is_unlimited then
         gui = gui .. "label[0.5,-0.4;Your stock is unlimited]"
 	end
-    if is_creative then
+    if is_admin then
         gui = gui .. "button[6,1;2.2,1;togglelimit;Toggle limit]"
     end
     gui = gui
@@ -346,15 +346,15 @@ function smartshop.shop_showform(pos, player, ignore_owner)
 
     local gui
     if is_owner then
-        -- if a shop is creative, but the player no longer has creative privs, revert the shop
-        local is_creative = smartshop.is_creative(meta)
-        if is_creative and not smartshop.util.player_is_creative(player_name) then
-			smartshop.set_creative(meta, false)
+        -- if a shop is admin, but the player no longer has admin privs, revert the shop
+        local is_admin = smartshop.is_admin(meta)
+        if is_admin and not smartshop.util.player_is_admin(player_name) then
+			smartshop.set_admin(meta, false)
 			smartshop.set_unlimited(meta, false)
-            is_creative = false
+            is_admin = false
         end
 
-        gui = get_shop_owner_gui(fpos, meta, is_creative)
+        gui = get_shop_owner_gui(fpos, meta, is_admin)
     else
         gui = get_shop_player_gui(fpos, inv)
     end

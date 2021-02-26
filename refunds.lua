@@ -24,7 +24,10 @@ if smartshop.settings.enable_refund then
         action            = function(pos, node)
             -- refund lost inventory items, or store them for later
             local meta = minetest.get_meta(pos)
-            if smartshop.is_creative(meta) then return end
+
+            -- don't bother refunding admin shops
+            if smartshop.is_admin(meta) then return end
+
             local inv = smartshop.get_inventory(meta)
 
             if smartshop.has_upgraded(meta) then
