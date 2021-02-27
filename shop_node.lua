@@ -53,13 +53,28 @@ local function on_rightclick(pos, node, player, itemstack, pointed_thing)
 end
 
 local function allow_metadata_inventory_put(pos, listname, index, stack, player)
-    if stack:get_wear() ~= 0 or not smartshop.util.can_access(player, pos) then
+    if not smartshop.util.can_access(player, pos) then
+        return 0
+    elseif stack:get_wear() ~= 0 then
         return 0
     elseif listname == "main" then
         return stack:get_count()
     else
         local inv = smartshop.get_inventory(pos)
-        inv:set_stack(listname, index, stack)
+        local old_stack = inv:get_stack(listname, index)
+        if old_stack:get_name() == stack:get_name() then
+            local old_count = old_stack:get_count()
+            local add_count = stack:get_count()
+            local max_count = old_stack:get_stack_max()
+            local new_count = math.min(old_count + add_count, max_count)
+            old_stack:set_count(new_count)
+            inv:set_stack(listname, index, old_stack)
+
+        else
+            inv:set_stack(listname, index, stack)
+        end
+
+        -- so we don't remove anything from the player's own stuff
         return 0
     end
 end
