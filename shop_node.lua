@@ -30,6 +30,7 @@ local function after_place_node(pos, placer)
     smartshop.set_infotext(shop_meta, ("Shop by: %s"):format(player_name))
     smartshop.set_admin(shop_meta, is_admin)
     smartshop.set_unlimited(shop_meta, is_admin)
+    smartshop.set_upgraded(shop_meta)
     smartshop.update_shop_color(pos)
 end
 

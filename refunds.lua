@@ -28,6 +28,7 @@ if smartshop.settings.enable_refund then
             -- don't bother refunding admin shops
             if smartshop.is_admin(meta) then return end
 
+            local owner = smartshop.get_owner(meta)
             local inv = smartshop.get_inventory(meta)
 
             if smartshop.has_upgraded(meta) then
@@ -35,6 +36,9 @@ if smartshop.settings.enable_refund then
                 for _, itemstring in ipairs(smartshop.get_refund(meta)) do
                     local itemstack = ItemStack(itemstring)
                     if inv:room_for_item("main", itemstack) then
+                        smartshop.log("action", "refunding %s to %s's shop at %s",
+                            itemstring, owner, minetest.pos_to_string(pos, 0)
+                        )
                         inv:add_item("main", itemstack)
                     else
                         table.insert(unrefunded, itemstack:to_string())
@@ -52,6 +56,9 @@ if smartshop.settings.enable_refund then
                     local pay_stack = inv:get_stack("pay" .. index, 1)
                     if not pay_stack:is_empty() then
                         if inv:room_for_item("main", pay_stack) then
+                            smartshop.log("action", "refunding %s to %s's shop at %s",
+                                pay_stack:to_string(), owner, minetest.pos_to_string(pos, 0)
+                            )
                             inv:add_item("main", pay_stack)
                         else
                             table.insert(unrefunded, pay_stack:to_string())
@@ -60,6 +67,9 @@ if smartshop.settings.enable_refund then
                     local give_stack = inv:get_stack("give" .. index, 1)
                     if not give_stack:is_empty() then
                         if inv:room_for_item("main", give_stack) then
+                            smartshop.log("action", "refunding %s to %s's shop at %s",
+                                give_stack:to_string(), owner, minetest.pos_to_string(pos, 0)
+                            )
                             inv:add_item("main", give_stack)
                         else
                             table.insert(unrefunded, give_stack:to_string())
