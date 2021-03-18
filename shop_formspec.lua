@@ -246,7 +246,7 @@ local function get_shop_owner_gui(spos, shop_meta, is_admin)
 			smartshop.log("warning", "send storage for shop @ %s has error: send_pos=%q title=%q wifi_owner=%q shop_owner=%q",
 						  spos, send_spos, wifi_title, wifi_owner, shop_owner)
             smartshop.set_send_spos(shop_meta, "")
-	        gui = gui .. "tooltip[tsend;Couldn't find send storage; unlinking]"
+	        gui = gui .. "tooltip[tsend;Couldn't find send storage - unlinking]"
 		else
 			wifi_title = minetest.formspec_escape(wifi_title)
             gui        = gui .. "tooltip[tsend;Payments sent to " .. wifi_title .. "]"
@@ -263,7 +263,7 @@ local function get_shop_owner_gui(spos, shop_meta, is_admin)
 			smartshop.log("warning", "refill storage for shop @ %s has error: send_pos=%q title=%q wifi_owner=%q shop_owner=%q",
 						  spos, send_spos, wifi_title, wifi_owner, shop_owner)
 			smartshop.set_refill_spos(shop_meta, "")
-	        gui = gui .. "tooltip[trefill;Couldn't find refill storage; unlinking]"
+	        gui = gui .. "tooltip[trefill;Couldn't find refill storage - unlinking]"
 		else
 			wifi_title = minetest.formspec_escape(wifi_title)
 			gui        = gui .. "tooltip[trefill;Refilled from " .. wifi_title .. "]"
