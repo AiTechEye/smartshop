@@ -30,16 +30,20 @@ local function get_image_from_tile(tile)
     if type(tile) == "string" then
         return tile
     elseif type(tile) == "table" then
+        local image_name
         if type(tile.image) == "string" then
-            if tile.animation and tile.animation.type == "vertical_frames" and tile.animation.aspect_w and tile.animation.aspect_h then
-                return ("smartshop_animation_mask.png^[resize:%ix%i^[mask:"):format(tile.animation.aspect_w, tile.animation.aspect_h) .. tile.image
-            elseif tile.animation and tile.animation.type == "sheet_2d" and tile.animation.frames_w and tile.animation.frames_h then
-                return tile.image .. ("^[sheet:%ix%i:0,0"):format(tile.animation.frames_w, tile.animation.frames_h)
-            else
-                return tile.image
-            end
+            image_name = tile.image
         elseif type(tile.name) == "string" then
-            return tile.name
+            image_name = tile.name
+        end
+        if image_name then
+            if tile.animation and tile.animation.type == "vertical_frames" and tile.animation.aspect_w and tile.animation.aspect_h then
+                return ("smartshop_animation_mask.png^[resize:%ix%i^[mask:"):format(tile.animation.aspect_w, tile.animation.aspect_h) .. image_name
+            elseif tile.animation and tile.animation.type == "sheet_2d" and tile.animation.frames_w and tile.animation.frames_h then
+                return image_name .. ("^[sheet:%ix%i:0,0"):format(tile.animation.frames_w, tile.animation.frames_h)
+            else
+                return image_name
+            end
         end
     end
     return "unknown_node.png"
