@@ -31,7 +31,11 @@ local function get_image_from_tile(tile)
         return tile
     elseif type(tile) == "table" then
         if type(tile.image) == "string" then
-            return tile.image
+            if tile.animation and tile.animation.frames_w and tile.animation.frames_h then
+                return tile.image..("^[sheet:%ix%i:0,0"):format(tile.animation.frames_w, tile.animation.frames_h)
+            else
+                return tile.image
+            end
         elseif type(tile.name) == "string" then
             return tile.name
         end
