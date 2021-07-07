@@ -31,8 +31,10 @@ local function get_image_from_tile(tile)
         return tile
     elseif type(tile) == "table" then
         if type(tile.image) == "string" then
-            if tile.animation and tile.animation.frames_w and tile.animation.frames_h then
-                return tile.image..("^[sheet:%ix%i:0,0"):format(tile.animation.frames_w, tile.animation.frames_h)
+            if tile.animation and tile.animation.type == "vertical_frames" and tile.animation.aspect_w and tile.animation.aspect_h then
+                return ("smartshop_animation_mask.png^[resize:%ix%i^[mask:"):format(tile.animation.aspect_w, tile.animation.aspect_h) .. tile.image
+            elseif tile.animation and tile.animation.type == "sheet_2d" and tile.animation.frames_w and tile.animation.frames_h then
+                return tile.image .. ("^[sheet:%ix%i:0,0"):format(tile.animation.frames_w, tile.animation.frames_h)
             else
                 return tile.image
             end
