@@ -253,7 +253,7 @@ function smartshop.can_exchange_currency(player_inv, shop_inv, send_inv, refill_
 				sold_thing = shop_inv_copy:remove_item("main", give_stack)
 			end
             if sold_thing:get_count() < give_stack:get_count() then
-				return false, ("%s is sold out"):format(give_stack:to_string())
+				return false, ("%s is sold out"):format(give_stack:get_name())
             end
 			local leftover
 			if send_inv_copy then
