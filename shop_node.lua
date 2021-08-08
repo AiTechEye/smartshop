@@ -184,6 +184,7 @@ local smartshop_def                                 = {
     on_metadata_inventory_put     = on_metadata_inventory_put,
     on_metadata_inventory_take    = on_metadata_inventory_take,
     can_dig                       = can_dig,
+    on_blast                      = function() end,
 }
 
 local smartshop_full_def                            = smartshop.util.deepcopy(smartshop_def)

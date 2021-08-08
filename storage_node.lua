@@ -143,4 +143,5 @@ minetest.register_node("smartshop:wifistorage", {
     on_metadata_inventory_put     = on_metadata_inventory_put,
     on_metadata_inventory_take    = on_metadata_inventory_take,
     can_dig                       = can_dig,
+    on_blast                      = function() end,
 })
