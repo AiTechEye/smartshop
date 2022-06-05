@@ -1,17 +1,6 @@
-if not minetest.get_modpath("pipeworks") then
-    return
-end
+-- luacheck: globals pipeworks
 
-local itemstrings = {
-    "smartshop:shop",
-    "smartshop:shop_full",
-    "smartshop:shop_empty",
-    "smartshop:shop_used",
-    "smartshop:shop_admin",
-    "smartshop:wifistorage"
-}
-
-for _, itemstring in ipairs(itemstrings) do
+local function pipeworks_override(itemstring)
     local def = minetest.registered_nodes[itemstring]
     local after_place_node = def.after_place_node
     local after_dig_node = def.after_dig_node
@@ -29,4 +18,12 @@ for _, itemstring in ipairs(itemstrings) do
             pipeworks.after_dig(pos, oldnode, oldmetadata, digger)
         end,
     })
+end
+
+for _, variant in ipairs(smartshop.shop_node_names) do
+	pipeworks_override(variant)
+end
+
+for _, variant in ipairs(smartshop.storage_node_names) do
+	pipeworks_override(variant)
 end

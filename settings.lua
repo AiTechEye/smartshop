@@ -1,18 +1,24 @@
-smartshop.settings = {}
-
-smartshop.settings.has_mesecon = minetest.global_exists("mesecon")
-smartshop.settings.has_currency = minetest.get_modpath("currency")
-
 local settings = minetest.settings
 
-smartshop.settings.max_wifi_distance = tonumber(settings:get("smartshop.max_wifi_distance")) or 30
-smartshop.settings.wifi_link_time = tonumber(settings:get("smartshop.wifi_link_time")) or 30
-smartshop.settings.change_currency = settings:get_bool("smartshop.change_currency", true)
-smartshop.settings.enable_refund = settings:get_bool("smartshop.enable_refund", true)
+smartshop.settings = {
+    storage_max_distance = tonumber(settings:get("smartshop.storage_max_distance")) or 30,
+	storage_link_time = tonumber(settings:get("smartshop.storage_link_time")) or 30,
 
-smartshop.settings.admin_shop_priv = settings:get("smartshop.admin_shop_priv") or "smartshop_admin"
+    change_currency = settings:get_bool("smartshop.change_currency", true),
+	enable_refund = settings:get_bool("smartshop.enable_refund", true),
 
+	admin_shop_priv = settings:get("smartshop.admin_shop_priv") or "smartshop_admin",
 
-minetest.register_privilege(smartshop.settings.admin_shop_priv, {
-    description = "A privilege used to make smartshops unlimited"
-})
+    -- crash, announce, log
+    error_behavior = settings:get("smartshop.error_behavior") or "announce",
+
+    enable_tests = settings:get_bool("smartshop.enable_tests", false),
+}
+
+if not minetest.registered_privileges[smartshop.settings.admin_shop_priv] then
+    minetest.register_privilege(smartshop.settings.admin_shop_priv, {
+        description = "Smartshop admin",
+        give_to_singleplayer = false,
+        give_to_admin = false,
+    })
+end

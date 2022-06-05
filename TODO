@@ -1,1 +1,12 @@
-See https://github.com/BlockySurvival/issue-tracker/issues/137
+* TESTING
+  * what remains: https://github.com/fluxionary/minetest-smartshop/issues/27
+
+
+
+* listed bugz
+  * #3 NaN checks when working w/ lurkcoin
+  * #31 toggle for allowing empty buy/give lines
+
+* MAYBE
+  * #28 logic for updating color of storage nodes (just "has had stuff put into it" and "ran out of stuff")
+  * update existing entities, not just create new ones.
