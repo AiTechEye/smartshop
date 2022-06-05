@@ -21,11 +21,11 @@ this mod provides two nodes - a shop, and an external storage.
 
 here is a picture of 2 properly configured shops with items for sale:
 
-![Preview](https://github.com/fluxionary/minetest-smartshop/raw/redo-redo/screenshot.png)
+![Preview](https://github.com/fluxionary/minetest-smartshop/raw/master/screenshot.png)
 
 here is a picture of the inventory that a shop owner sees:
 
-![Preview](https://github.com/fluxionary/minetest-smartshop/raw/redo-redo/screenshot2.png)
+![Preview](https://github.com/fluxionary/minetest-smartshop/raw/master/screenshot2.png)
 
 the top 4 slots are for things you want to sell. you don't need to fill them all. 
 
@@ -39,7 +39,7 @@ for 10 gold ingots.
 
 here is a picture of what a customer will see when interacting with your shop:
 
-![Preview](https://github.com/fluxionary/minetest-smartshop/raw/redo-redo/screenshot3.png)
+![Preview](https://github.com/fluxionary/minetest-smartshop/raw/master/screenshot3.png)
 
 if the customer has gold in their inventory, and clicks on the icons, they will "trade" some of their gold
 for the items that were in the shop. 
