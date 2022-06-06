@@ -32,11 +32,20 @@ end
 
 --------------------
 
-smartshop.api.register_on_purchase(function(player, shop, i)
-	local pos = shop.pos
-    mesecon.receptor_on(pos)
-    minetest.get_node_timer(pos):start(1)
-end)
+local shop_class = smartshop.shop_class
+
+function shop_class:set_state(value)
+	self.meta:set_int("state", value)
+	self.meta:mark_as_private("state")
+end
+
+local old_shop_initialize_metadata = shop_class.initialize_metadata
+
+function shop_class:initialize_metadata(player)
+	old_shop_initialize_metadata(self, player)
+
+	self:set_state(0)  -- is this actually needed by mesecons, or what?
+end
 
 --------------------
 
@@ -59,25 +68,6 @@ function smartshop.api.build_storage_formspec(storage)
 
 	return table.concat(fs_parts, "")
 end
-
---------------------
-
-local shop_class = smartshop.shop_class
-
-function shop_class:set_state(value)
-	self.meta:set_int("state", value)
-	self.meta:mark_as_private("state")
-end
-
-local old_shop_initialize_metadata = shop_class.initialize_metadata
-
-function shop_class:initialize_metadata(player)
-	old_shop_initialize_metadata(self, player)
-
-	self:set_state(0)  -- is this actually needed by mesecons, or what?
-end
-
---------------------
 
 local storage_class = smartshop.storage_class
 
@@ -108,8 +98,34 @@ function storage_class:receive_fields(player, fields)
 		self:toggle_mesein()
 		self:show_formspec(player)
 	else
-		old_storage_receive_fields(player, fields)
+		old_storage_receive_fields(self, player, fields)
 	end
 end
+
+--------------------
+
+smartshop.api.register_on_purchase(function(player, shop, i)
+	local pos = shop.pos
+    mesecon.receptor_on(pos)
+    minetest.get_node_timer(pos):start(1)
+	local send = shop:get_send()
+	if send then
+		local send_pos = send.pos
+		local send_mesein = send:get_mesein()
+		if send_mesein == 1 or send_mesein == 3 then
+			mesecon.receptor_on(send_pos)
+			minetest.get_node_timer(send_pos):start(1)
+		end
+	end
+	local refill = shop:get_refill()
+	if refill then
+		local refill_pos = refill.pos
+		local refill_mesein = refill:get_mesein()
+		if refill_mesein == 2 or refill_mesein == 3 then
+			mesecon.receptor_on(refill_pos)
+			minetest.get_node_timer(refill_pos):start(1)
+		end
+	end
+end)
 
 
