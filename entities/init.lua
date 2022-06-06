@@ -12,6 +12,7 @@ smartshop.dofile("entities", "quad_upright_sprite")
 smartshop.dofile("entities", "single_sprite")
 smartshop.dofile("entities", "single_upright_sprite")
 smartshop.dofile("entities", "single_wielditem")
+smartshop.dofile("entities", "remove_legacy_entities")
 
 minetest.register_lbm({
 	name = "smartshop:load_shop",

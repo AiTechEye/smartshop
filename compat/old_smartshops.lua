@@ -21,24 +21,6 @@ local get_objects_inside_radius = minetest.get_objects_inside_radius
 
 local api = smartshop.api
 
-local function clear_legacy_entities(pos)
-    for _, ob in ipairs(get_objects_inside_radius(pos, 3)) do
-        -- "3" was chosen because "2" doesn't work sometimes. it should work w/ "1" but doesn't.
-        -- note that we still check that the entity is related to the current shop
-
-        local le = ob:get_luaentity()
-        if le then
-            if le.smartshop then
-                -- old smartshop entity
-                ob:remove()
-            elseif le.pos and type(le.pos) == "table" and v_eq(pos, v_round(le.pos)) then
-                -- entities associated w/ the current pos
-                ob:remove()
-            end
-        end
-    end
-end
-
 local function convert_metadata(pos)
     -- convert legacy metadata
 	local shop = api.get_object(pos)
@@ -75,7 +57,6 @@ end
 
 function smartshop.compat.convert_legacy_shop(pos)
 	convert_metadata(pos)
-	clear_legacy_entities(pos)
 
 	local shop = api.get_object(pos)
 	shop:update_appearance()
