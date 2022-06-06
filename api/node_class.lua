@@ -4,7 +4,7 @@ local pos_to_string = minetest.pos_to_string
 
 local api = smartshop.api
 
-local is_admin = smartshop.util.is_admin
+local player_is_admin = smartshop.util.player_is_admin
 
 local class = smartshop.util.class
 local formspec_pos = smartshop.util.formspec_pos
@@ -49,7 +49,7 @@ function node_class:is_owner(player)
 	if type(player) == "userdata" then
 		player = player:get_player_name()
 	end
-	if is_admin(player) then
+	if player_is_admin(player) then
 		return true
 	elseif self:is_private() then
 		return player == self:get_owner()
