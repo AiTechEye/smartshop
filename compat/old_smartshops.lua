@@ -10,16 +10,10 @@ the items can still be lost, though, if the player empties the shop and then
 breaks the node, before the LBM has been run.
 --]]
 
-
-local v_eq = vector.equals
-local v_round = vector.round
-
-local string_to_pos = smartshop.util.string_to_pos
-
 local get_meta = minetest.get_meta
-local get_objects_inside_radius = minetest.get_objects_inside_radius
 
 local api = smartshop.api
+local string_to_pos = smartshop.util.string_to_pos
 
 local function convert_metadata(pos)
     -- convert legacy metadata
