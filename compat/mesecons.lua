@@ -108,6 +108,7 @@ smartshop.api.register_on_purchase(function(player, shop, i)
 	local pos = shop.pos
     mesecon.receptor_on(pos)
     minetest.get_node_timer(pos):start(1)
+
 	local send = shop:get_send()
 	if send then
 		local send_pos = send.pos
@@ -117,6 +118,7 @@ smartshop.api.register_on_purchase(function(player, shop, i)
 			minetest.get_node_timer(send_pos):start(1)
 		end
 	end
+
 	local refill = shop:get_refill()
 	if refill then
 		local refill_pos = refill.pos
