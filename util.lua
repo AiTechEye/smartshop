@@ -38,22 +38,25 @@ function util.player_is_admin(player_or_name)
 end
 
 function util.table_is_empty(t)
-	return not next(t)
+	return next(t) == nil
 end
 
 function util.pairs_by_value(t, sort_function)
-	if not sort_function then
-		sort_function = function(a, b)
-			return a < b
-		end
-	end
 	local s = {}
 	for k, v in pairs(t) do
 		table.insert(s, {k, v})
 	end
-	table.sort(s, function(a, b)
-		return sort_function(a[2], b[2])
-	end)
+
+	if sort_function then
+		table.sort(s, function(a, b)
+			return sort_function(a[2], b[2])
+		end)
+	else
+		table.sort(s, function(a, b)
+			return a[2] < b[2]
+		end)
+	end
+
 	local i = 0
 	return function()
 		i = i + 1
