@@ -452,19 +452,19 @@ function shop_class:update_appearance()
 end
 
 function shop_class:get_info_line(i)
-
     if not self:can_exchange(i) then
         return
     end
 
     local give = self:get_give_stack(i)
-    local def = give:get_definition()
 
-    local description = def.short_description or (def.description or ""):match("^[^\n]*")
-    if not description or description == "" then
-        description = give:get_name()
-    end
+    local description = give:get_short_description() or (give:get_description()):match("^[^\n]*")
     description = description:gsub("%%", "%%%%")
+
+    local count = give:get_count()
+    if count > 1 then
+        description = ("%s*%i"):format(description, count)
+    end
 
     if self:is_unlimited() then
         return ("(inf) %s"):format(description)
@@ -478,35 +478,34 @@ function shop_class:get_info_line(i)
 end
 
 function shop_class:update_info()
-    local lines = {}
+    local owner = self:get_owner()
+    local lines = {S("(Smartshop by @1)", owner)}
+
+    local info_lines = {}
     for i = 1, 4 do
         local line = self:get_info_line(i)
         if line then
-            table.insert(lines, line)
+            table.insert(info_lines, line)
         end
     end
 
-    local owner = self:get_owner()
-    if #lines == 0 then
+    if #info_lines == 0 then
         local variant = self:compute_variant()
         if variant == "smartshop:shop_full" then
-            self:set_infotext(S("(Smartshop by @1)\nThis shop is over-full.", owner))
+            table.insert(lines, S("This shop is over-full."))
 
         elseif variant == "smartshop:shop_empty" then
-            self:set_infotext(S("(Smartshop by @1)\nThis shop is sold out.", owner))
+            table.insert(lines, S("This shop is sold out."))
 
         else
-            self:set_infotext(S("(Smartshop by @1)\nThis shop is not configured.", owner))
+            table.insert(lines, S("This shop is not configured."))
         end
+
     else
-        if self:is_unlimited() then
-            table.insert(lines, 1, S("(Smartshop by @1)\nStock is unlimited.", owner))
-
-        else
-            table.insert(lines, 1, S("(Smartshop by @1)\nPurchases left:", owner))
-        end
-        self:set_infotext(table.concat(lines, "\n"))
+        table.insert_all(lines, info_lines)
     end
+
+    self:set_infotext(table.concat(lines, "\n"))
 end
 
 function shop_class:can_give(i)
