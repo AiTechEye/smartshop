@@ -467,7 +467,7 @@ function shop_class:get_info_line(i)
     end
 
     if self:is_unlimited() then
-        return ("(inf) %s"):format(description)
+        return ("(∞) %s"):format(description)
     end
 
     local give_count = self:can_give_count(i)
