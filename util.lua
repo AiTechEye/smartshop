@@ -310,8 +310,6 @@ local function tokenize(s)
 			j = j + 1
 		end
 	end
-
-	return tokens
 end
 
 local function parse(tokens, i, parsed)
@@ -360,16 +358,15 @@ local function erase_after_newline(parsed, erasing)
 
 	for _, piece in ipairs(parsed) do
 		if type(piece) == "string" then
-			if erasing then
-				-- do nothing
+			if not erasing then
+				if piece:find("\n") then
+					erasing = true
+					local single_line = piece:match("^([^\n]*)\n")
+					table.insert(single_line_parsed, single_line)
 
-			elseif piece:find("\n") then
-				erasing = true
-				local single_line = piece:match("^([^\n]*)\n")
-				table.insert(single_line_parsed, single_line)
-
-			else
-				table.insert(single_line_parsed, piece)
+				else
+					table.insert(single_line_parsed, piece)
+				end
 			end
 
 		elseif piece.type == "bgcolor" or piece.type == "color" then
