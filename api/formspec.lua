@@ -54,17 +54,17 @@ function api.build_owner_formspec(shop)
 		"list[current_player;main;0,6.2;8,4;]",
 		("listring[nodemeta:%s;main]"):format(fpos),
 		"listring[current_player;main]",
-		("checkbox[6,0.9;strict_meta;%s;%s]"):format(FS("strict meta?"), is_strict_meta),
+		("checkbox[6,0.9;strict_meta;%s;%s]"):format(FS("strict meta?"), tostring(is_strict_meta)),
 		("tooltip[strict_meta;%s]"):format(FS("check this if you are buying or selling items with unique properties " ..
 			"like written books or petz."
 		)),
-		("checkbox[6,1.2;private;%s;%s]"):format(FS("private?"), is_private),
+		("checkbox[6,1.2;private;%s;%s]"):format(FS("private?"), tostring(is_private)),
 		("tooltip[private;%s]"):format(FS("uncheck this if you want to share control of the shop with anyone in the " ..
 			"protected area.")),
 	}
 
 	if player_is_admin(owner) then
-		table.insert(fs_parts, ("checkbox[6,0.6;is_unlimited;%s;%s]"):format(FS("unlimited?"), is_unlimited))
+		table.insert(fs_parts, ("checkbox[6,0.6;is_unlimited;%s;%s]"):format(FS("unlimited?"), tostring(is_unlimited)))
 		table.insert(fs_parts, ("tooltip[is_unlimited;%s]"):format(FS("check this allow exchanges ex nihilo. " ..
 			"shop contents will be ignored")))
 	end
@@ -160,7 +160,7 @@ function api.build_storage_formspec(storage)
 		"list[current_player;main;2,5;8,4;]",
 		("listring[nodemeta:%s;main]"):format(fpos),
 		"listring[current_player;main]",
-		("checkbox[0,7;private;%s;%s]"):format(FS("Private?"), is_private),
+		("checkbox[0,7;private;%s;%s]"):format(FS("Private?"), tostring(is_private)),
 		("tooltip[private;%s]"):format(FS("uncheck this if you want to share control of the storage with anyone in " ..
 			"the protected area.")),
 	}
