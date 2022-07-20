@@ -7,6 +7,7 @@ local write_json = minetest.write_json
 
 local S = smartshop.S
 local class = smartshop.util.class
+local get_short_description = smartshop.util.get_short_description
 local player_is_admin = smartshop.util.player_is_admin
 local string_to_pos = smartshop.util.string_to_pos
 local table_is_empty = smartshop.util.table_is_empty
@@ -458,8 +459,7 @@ function shop_class:get_info_line(i)
 
     local give = self:get_give_stack(i)
 
-    local description = give:get_short_description() or (give:get_description()):match("^[^\n]*")
-    description = description:gsub("%%", "%%%%")
+    local description = get_short_description(give):gsub("%%", "%%%%")
 
     local count = give:get_count()
     if count > 1 then
