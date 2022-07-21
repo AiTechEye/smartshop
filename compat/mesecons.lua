@@ -22,11 +22,11 @@ local function mesecons_override(itemstring)
 	})
 end
 
-for _, variant in ipairs(smartshop.shop_node_names) do
+for _, variant in ipairs(smartshop.nodes.shop_node_names) do
 	mesecons_override(variant)
 end
 
-for _, variant in ipairs(smartshop.storage_node_names) do
+for _, variant in ipairs(smartshop.nodes.storage_node_names) do
 	mesecons_override(variant)
 end
 

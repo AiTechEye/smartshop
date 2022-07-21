@@ -47,6 +47,10 @@ smartshop.nodes = {
         local obj = get_object(pos)
         return obj:on_destruct()
     end,
+
+    make_variant_tiles = function(color)
+        return {("(smartshop_face.png^[colorize:#FFFFFF77)^(smartshop_border.png^[colorize:%s)"):format(color)}
+    end,
 }
 
 smartshop.dofile("nodes", "shop")

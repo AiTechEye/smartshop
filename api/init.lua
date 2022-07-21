@@ -18,7 +18,7 @@ smartshop.dofile("api", "entities")
 function smartshop.api.is_shop(pos)
 	if not pos then return end
 	local node_name = minetest.get_node(pos).name
-	for _, name in ipairs(smartshop.shop_node_names) do
+	for _, name in ipairs(smartshop.nodes.shop_node_names) do
 		if name == node_name then
 			return true
 		end
@@ -29,7 +29,7 @@ end
 function smartshop.api.is_storage(pos)
 	if not pos then return end
 	local node_name = minetest.get_node(pos).name
-	for _, name in ipairs(smartshop.storage_node_names) do
+	for _, name in ipairs(smartshop.nodes.storage_node_names) do
 		if name == node_name then
 			return true
 		end

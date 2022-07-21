@@ -1,3 +1,6 @@
+local get_node = minetest.get_node
+local swap_node = minetest.swap_node
+
 local S = smartshop.S
 local api = smartshop.api
 local class = smartshop.util.class
@@ -76,3 +79,36 @@ function storage_class:receive_fields(player, fields)
 	end
 end
 
+------------------
+
+function storage_class:set_variant(variant)
+	local node = get_node(self.pos)
+    if node.name ~= variant then
+	    node.name = variant
+        swap_node(self.pos, node)
+    end
+end
+
+function storage_class:add_item(stack)
+	local leftover = node_class.add_item(self, stack)
+	self:set_variant("smartshop:storage_has_send")
+	return leftover
+end
+
+function storage_class:remove_item(stack, match_meta)
+	local removed = node_class.remove_item(self, stack, match_meta)
+	if not self:contains_item(stack, match_meta) then
+		self:set_variant("smartshop:storage_lacks_refill")
+	end
+	return removed
+end
+
+function storage_class:on_metadata_inventory_put(listname, index, stack, player)
+	node_class.on_metadata_inventory_put(self, listname, index, stack, player)
+	self:set_variant("smartshop:storage")
+end
+
+function storage_class:on_metadata_inventory_take(listname, index, stack, player)
+	node_class.on_metadata_inventory_take(self, listname, index, stack, player)
+	self:set_variant("smartshop:storage")
+end

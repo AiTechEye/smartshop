@@ -3,7 +3,7 @@ local table_copy = table.copy
 local nodes = smartshop.nodes
 local api = smartshop.api
 
-smartshop.storage_node_names = {}
+smartshop.nodes.storage_node_names = {}
 
 local storage_def = {
 	description = S("Smartshop external storage"),
@@ -32,7 +32,7 @@ local storage_def = {
 	end,
 }
 
-local function register_variant(name, overrides)
+local function register_storage_variant(name, overrides)
 	local variant_def
 	if overrides then
 		variant_def = table_copy(storage_def)
@@ -46,20 +46,17 @@ local function register_variant(name, overrides)
 	end
 
 	minetest.register_node(name, variant_def)
-	table.insert(smartshop.storage_node_names, name)
+	table.insert(smartshop.nodes.storage_node_names, name)
 end
 
-local function make_variant_tiles(color)
-	return {("(smartshop_face.png^[colorize:#FFFFFF77)^(smartshop_border.png^[colorize:%s)"):format(color)}
-end
+local make_variant_tiles = smartshop.nodes.make_variant_tiles
 
-register_variant("smartshop:storage")
-register_variant("smartshop:storage_full", {
-	tiles = make_variant_tiles("#0000FF77")
-})
-register_variant("smartshop:storage_empty", {
+register_storage_variant("smartshop:storage")
+
+register_storage_variant("smartshop:storage_lacks_refill", {
 	tiles = make_variant_tiles("#FF000077")
 })
-register_variant("smartshop:storage_used", {
+
+register_storage_variant("smartshop:storage_has_send", {
 	tiles = make_variant_tiles("#00FF0077")
 })

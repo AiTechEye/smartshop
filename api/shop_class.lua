@@ -248,9 +248,9 @@ function shop_class:pay_is_valid(i)
     return stack:is_known() and not stack:is_empty()
 end
 
-function shop_class:has_pay(i)
+function shop_class:has_pay(i, ignore_storage)
     local stack = self:get_pay_stack(i)
-    return self:contains_item(stack, "pay")
+    return self:contains_item(stack, "pay", ignore_storage)
 end
 
 function shop_class:has_pay_count(i)
@@ -319,7 +319,7 @@ function shop_class:add_item(stack, kind)
     return node_class.add_item(self, stack)
 end
 
-function shop_class:contains_item(stack, kind)
+function shop_class:contains_item(stack, kind, ignore_storage)
     if self:is_unlimited() then
         return true
     end
@@ -330,14 +330,18 @@ function shop_class:contains_item(stack, kind)
         return true
     end
 
-    if kind == "give" then
-        local refill = self:get_refill()
-        return refill and refill:contains_item(stack, match_meta)
+    if not ignore_storage then
+        if kind == "give" then
+            local refill = self:get_refill()
+            return refill and refill:contains_item(stack, match_meta)
 
-    elseif kind == "pay" then
-        local send = self:get_send()
-        return send and send:contains_item(stack, match_meta)
+        elseif kind == "pay" then
+            local send = self:get_send()
+            return send and send:contains_item(stack, match_meta)
+        end
     end
+
+    return false
 end
 
 function shop_class:remove_item(stack, kind)
@@ -508,9 +512,9 @@ function shop_class:update_info()
     self:set_infotext(table.concat(lines, "\n"))
 end
 
-function shop_class:can_give(i)
+function shop_class:can_give(i, ignore_storage)
     local give = self:get_give_stack(i)
-    return self:contains_item(give, "give")
+    return self:contains_item(give, "give", ignore_storage)
 end
 
 function shop_class:compute_variant()
@@ -521,7 +525,7 @@ function shop_class:compute_variant()
     local n_total = 4
     local n_have_give = 0
     local n_have_pay = 0
-    local n_have_room_for_pay = 0
+    local n_can_exchange = 0
 
     for i = 1, 4 do
         if not self:pay_is_valid(i) or not self:give_is_valid(i) then
@@ -530,11 +534,11 @@ function shop_class:compute_variant()
             if self:can_give(i) then
                 n_have_give = n_have_give + 1
             end
-            if self:has_pay(i) then
+            if self:has_pay(i, true) then
                 n_have_pay = n_have_pay + 1
             end
             if self:can_exchange(i) then
-                n_have_room_for_pay = n_have_room_for_pay + 1
+                n_can_exchange = n_can_exchange + 1
             end
         end
     end
@@ -542,14 +546,18 @@ function shop_class:compute_variant()
     if n_total == 0 then
         -- unconfigured shop
         return "smartshop:shop"
+
     elseif n_have_give ~= n_total then
         -- something is sold out
         return "smartshop:shop_empty"
+
     elseif n_have_pay > 0 then
         return "smartshop:shop_used"
-    elseif n_have_room_for_pay ~= n_total then
-        -- something can't be bought because the shop is full
+
+    elseif n_can_exchange ~= n_total then
+        -- something can't be bought
         return "smartshop:shop_full"
+
     else
         -- shop is ready for use
         return "smartshop:shop"
@@ -560,64 +568,9 @@ function shop_class:update_variant()
     local to_swap = self:compute_variant()
 
     local node = get_node(self.pos)
-    local node_name = node.name
-    if node_name ~= to_swap then
+    if node.name ~= to_swap then
         swap_node(self.pos, {
             name = to_swap,
-            param1 = node.param1,
-            param2 = node.param2
-        })
-    end
-
-    -- this logic is totally broken, disable it for the moment
-    --self:update_send_variant(to_swap)
-    --self:update_refill_variant(to_swap)
-end
-
-function shop_class:update_refill_variant(to_swap)
-    local refill = self:get_refill()
-    if not refill then
-        return
-    end
-
-    local storage_variant
-    if to_swap == "smartshop:shop_empty" then
-        storage_variant = "smartshop:storage_empty"
-    else
-        storage_variant = "smartshop:storage"
-    end
-
-    local node = get_node(refill.pos)
-    local node_name = node.name
-    if node_name ~= storage_variant then
-        swap_node(refill.pos, {
-            name = storage_variant,
-            param1 = node.param1,
-            param2 = node.param2
-        })
-    end
-end
-
-function shop_class:update_send_variant(shop_to_swap)
-    local send = self:get_send()
-    if not send then
-        return
-    end
-
-    local storage_variant
-    if shop_to_swap == "smartshop:shop_full" then
-        storage_variant = "smartshop:storage_full"
-    elseif shop_to_swap == "smartshop:shop_used" then
-        storage_variant = "smartshop:storage_used"
-    else
-        storage_variant = "smartshop:storage"
-    end
-
-    local node = get_node(send.pos)
-    local node_name = node.name
-    if node_name ~= storage_variant then
-        swap_node(send.pos, {
-            name = storage_variant,
             param1 = node.param1,
             param2 = node.param2
         })

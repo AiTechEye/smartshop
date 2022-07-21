@@ -2,7 +2,7 @@ local S = smartshop.S
 local table_copy = table.copy
 local nodes = smartshop.nodes
 
-smartshop.shop_node_names = {}
+smartshop.nodes.shop_node_names = {}
 
 local smartshop_def = {
 	description = S("Smartshop"),
@@ -34,7 +34,7 @@ local smartshop_def = {
 	on_blast = function() end,  -- explosion-proof
 }
 
-local function register_variant(name, overrides)
+local function register_shop_variant(name, overrides)
 	local variant_def
 	if overrides then
 		variant_def = table_copy(smartshop_def)
@@ -48,23 +48,25 @@ local function register_variant(name, overrides)
 	end
 
 	minetest.register_node(name, variant_def)
-	table.insert(smartshop.shop_node_names, name)
+	table.insert(smartshop.nodes.shop_node_names, name)
 end
 
-local function make_variant_tiles(color)
-	return {("(smartshop_face.png^[colorize:#FFFFFF77)^(smartshop_border.png^[colorize:%s)"):format(color)}
-end
+local make_variant_tiles = smartshop.nodes.make_variant_tiles
 
-register_variant("smartshop:shop")
-register_variant("smartshop:shop_full", {
+register_shop_variant("smartshop:shop")
+
+register_shop_variant("smartshop:shop_full", {
 	tiles = make_variant_tiles("#80008077")
 })
-register_variant("smartshop:shop_empty", {
+
+register_shop_variant("smartshop:shop_empty", {
 	tiles = make_variant_tiles("#FF000077")
 })
-register_variant("smartshop:shop_used", {
+
+register_shop_variant("smartshop:shop_used", {
 	tiles = make_variant_tiles("#00FF0077")
 })
-register_variant("smartshop:shop_admin", {
+
+register_shop_variant("smartshop:shop_admin", {
 	tiles = make_variant_tiles("#00FFFF77")
 })
