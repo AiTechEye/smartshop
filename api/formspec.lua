@@ -10,7 +10,9 @@ local function FS(text, ...)
 end
 
 local formspec_pos = smartshop.util.formspec_pos
+local get_short_description = smartshop.util.get_short_description
 local player_is_admin = smartshop.util.player_is_admin
+local truncate = smartshop.util.truncate
 
 --------------------
 
@@ -102,6 +104,7 @@ function api.build_client_formspec(shop)
 	-- which fixes UI scaling issues for small screens
 
 	local fpos = formspec_pos(shop.pos)
+	local strict_meta = shop:is_strict_meta()
 
 	local fs_parts = {
 		"formspec_version[3]",
@@ -114,12 +117,33 @@ function api.build_client_formspec(shop)
 
 	local function give_i(i)
 		if shop:can_exchange(i) then
-			local give = shop:get_give_stack(i)
-			return table.concat({
+			local give_stack = shop:get_give_stack(i)
+			local give_parts = {
 				("list[nodemeta:%s;give%i;%f,0.375;1,1;]"):format(fpos, i, (i + 1) * (5 / 4) + (3 / 8)),
 				("image_button[%f,0.375;1,1;blank.png;buy%ia;]"):format((i + 1) * (5 / 4) + (3 / 8), i),
-				("tooltip[buy%ia;%s\n%s]"):format(i, F(give:get_description()), F(give:to_string()))
-			}, "")
+			}
+
+			if strict_meta then
+				table.insert(give_parts, ("tooltip[buy%ia;%s\n%s]"):format(
+					i, F(get_short_description(give_stack)), F(truncate(give_stack:to_string(), 50))
+				))
+
+			else
+				local item_name = give_stack:get_name()
+				local def = minetest.registered_items[item_name]
+				local description
+				if def then
+					description = def.short_description or def.description or def.name
+				else
+					description = item_name
+				end
+
+				table.insert(give_parts, ("tooltip[buy%ia;%s\n%s]"):format(
+					i, F(description), F(item_name)
+				))
+			end
+
+			return table.concat(give_parts, "")
 		else
 			return ""
 		end
@@ -127,12 +151,33 @@ function api.build_client_formspec(shop)
 
 	local function buy_i(i)
 		if shop:can_exchange(i) then
-			local pay = shop:get_pay_stack(i)
-			return table.concat({
+			local pay_stack = shop:get_pay_stack(i)
+			local pay_parts = {
 				("list[nodemeta:%s;pay%i;%f,1.625;1,1;]"):format(fpos, i, (i + 1) * (5 / 4) + (3 / 8)),
 				("image_button[%f,1.625;1,1;blank.png;buy%ib;]"):format((i + 1) * (5 / 4) + (3 / 8), i),
-				("tooltip[buy%ib;%s\n%s]"):format(i, F(pay:get_description()), F(pay:to_string()))
-			}, "")
+			}
+
+			if strict_meta then
+				table.insert(pay_parts, ("tooltip[buy%ib;%s\n%s]"):format(
+					i, F(get_short_description(pay_stack)), F(truncate(pay_stack:to_string(), 50))
+				))
+
+			else
+				local item_name = pay_stack:get_name()
+				local def = minetest.registered_items[item_name]
+				local description
+				if def then
+					description = def.short_description or def.description or def.name
+				else
+					description = item_name
+				end
+
+				table.insert(pay_parts, ("tooltip[buy%ib;%s\n%s]"):format(
+					i, F(description), F(item_name)
+				))
+			end
+
+			return table.concat(pay_parts, "")
 		else
 			return ""
 		end

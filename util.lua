@@ -240,6 +240,14 @@ function util.escape_texture(texturestring)
 	return v
 end
 
+function util.truncate(s, max_length)
+	if s:len() > max_length then
+		return s:sub(1, max_length - 3) .. "..."
+	else
+		return s
+	end
+end
+
 local function tokenize(s)
 	local tokens = {}
 
