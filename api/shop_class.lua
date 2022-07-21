@@ -14,6 +14,8 @@ local table_is_empty = smartshop.util.table_is_empty
 
 local api = smartshop.api
 
+local history_max = smartshop.settings.history_max
+
 --------------------
 
 local node_class = smartshop.node_class
@@ -158,6 +160,85 @@ end
 
 function shop_class:is_strict_meta()
     return self.meta:get_int("strict_meta") == 1
+end
+
+function shop_class:get_purchase_history()
+    local history = self.meta:get("purchase_history")
+    if history then
+        return minetest.deserialize(history) or {index = 0}
+
+    else
+        return {index = 0}
+    end
+end
+
+function shop_class:log_purchase(player, i, mechanic)
+    local player_name = player:get_player_name()
+
+    local give_stack = self:get_give_stack(i)
+    local pay_stack = self:get_pay_stack(i)
+
+    smartshop.log("action", "%s bought %q for %q from %s's shop @ %s via %s",
+        player_name, give_stack:to_string(), pay_stack:to_string(), self:get_owner(), self:get_pos_as_string(), mechanic
+    )
+
+    if history_max == 0 then
+        return
+    end
+
+    local now = os.time()
+    local strict_meta = self:is_strict_meta()
+
+    local give_item, pay_item
+    if strict_meta then
+        give_item = get_short_description(give_stack)
+        pay_item = get_short_description(pay_stack)
+    else
+        give_item = give_stack:get_name()
+        pay_item = pay_stack:get_name()
+    end
+
+    local give_count = give_stack:get_count()
+    local pay_count = pay_stack:get_count()
+
+    local history = self:get_purchase_history()
+    local most_recent = history[history.index]
+
+    if (
+        most_recent and
+        most_recent.player_name == player_name and
+        most_recent.give_item == give_item and
+        most_recent.pay_item == pay_item and
+        most_recent.timestamp + 60 <= now
+    ) then
+        most_recent.give_count = most_recent.give_count + give_count
+        most_recent.pay_count = most_recent.pay_count + pay_count
+        most_recent.timestamp = now
+
+    else
+        -- treat the history like a ring buffer
+        local cur_index = history.index
+        local next_index
+        if history_max > 0 and cur_index == history_max then
+            next_index = 1
+
+        else
+            next_index = cur_index + 1
+        end
+
+        history.index = next_index
+        history[next_index] = {
+            player_name = player_name,
+            give_item = give_item,
+            give_count = give_count,
+            pay_item = pay_item,
+            pay_count = pay_count,
+            timestamp = now,
+            method = mechanic
+        }
+    end
+
+    self.meta:set_string("purchase_history", minetest.serialize(history))
 end
 
 --------------------

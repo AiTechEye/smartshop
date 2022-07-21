@@ -1,6 +1,7 @@
 local settings = minetest.settings
 
 smartshop.settings = {
+	history_max = tonumber(settings:get("smartshop.history_max")) or 60,
     storage_max_distance = tonumber(settings:get("smartshop.storage_max_distance")) or 30,
 	storage_link_time = tonumber(settings:get("smartshop.storage_link_time")) or 30,
 

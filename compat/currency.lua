@@ -1,3 +1,4 @@
+local S = smartshop.S
 local api = smartshop.api
 local util = smartshop.util
 
@@ -261,6 +262,7 @@ end
 
 api.register_purchase_mechanic({
 	name = "smartshop:currency",
+	description = S("currency exchange"),
 	allow_purchase = function(player, shop, i)
 		local player_inv = api.get_player_inv(player)
 

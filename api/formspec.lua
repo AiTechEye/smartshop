@@ -42,7 +42,7 @@ function api.build_owner_formspec(shop)
 
 	local fs_parts = {
 		"size[8,10]",
-		("button[6,0;1.5,1;customer;%s]"):format(FS("customer")),
+		("button[6,0;2,1;customer;%s]"):format(FS("customer view")),
 		("label[0,0.2;%s]"):format(FS("for sale:")),
 		("label[0,1.2;%s]"):format(FS("price:")),
 		("list[nodemeta:%s;give1;1,0;1,1;]"):format(fpos),

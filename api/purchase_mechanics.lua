@@ -1,3 +1,4 @@
+local S = smartshop.S
 local api = smartshop.api
 
 local check_shop_add = smartshop.util.check_shop_add_remainder
@@ -52,6 +53,7 @@ function api.try_purchase(player, shop, i)
 	for _, def in ipairs(api.registered_purchase_mechanics) do
 		if def.allow_purchase(player, shop, i) then
 			def.do_purchase(player, shop, i)
+			shop:log_purchase(player, i, def.name)
 			api.on_purchase(player, shop, i)
 			return true
 		end
@@ -89,6 +91,7 @@ end
 
 api.register_purchase_mechanic({
 	name = "smartshop:basic_purchase",
+	description = S("normal exchange"),
 	allow_purchase = function(player, shop, i)
 		local player_inv = api.get_player_inv(player)
 		local pay_stack = shop:get_pay_stack(i)
