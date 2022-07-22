@@ -212,4 +212,3 @@ function api.build_storage_formspec(storage)
 
 	return table.concat(fs_parts, "")
 end
-

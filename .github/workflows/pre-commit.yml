@@ -1,0 +1,16 @@
+name: pre-commit
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-python@master
+
+      - name: Install pre-commit
+        run: pip3 install pre-commit
+
+      - name: Run pre-commit
+        run: pre-commit run --all-files

@@ -122,4 +122,3 @@ table.insert(smartshop.tests.tests, {
         assert(tool_meta:get_string("description") == "Hey I'm a Tool", "purchased tool has meta")
     end,
 })
-

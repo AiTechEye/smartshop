@@ -25,4 +25,3 @@ smartshop.error_behavior (behavior on non-fatal serious error) enum announce cra
 # enable if you want to run the testing suite. do not enable in general, and do not use on a real world, as it is
 # destructive
 smartshop.enable_tests (enable test mode - dangerous!) bool false
-

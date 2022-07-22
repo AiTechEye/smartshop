@@ -37,4 +37,3 @@ end
 function player_inv_class:get_all_counts()
 	return inv_class.get_all_counts(self, true)
 end
-

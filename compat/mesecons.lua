@@ -129,5 +129,3 @@ smartshop.api.register_on_purchase(function(player, shop, i)
 		end
 	end
 end)
-
-

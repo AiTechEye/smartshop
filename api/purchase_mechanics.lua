@@ -135,4 +135,3 @@ api.register_purchase_mechanic({
 		check_shop_add(shop, shop_remaining)
 	end
 })
-
