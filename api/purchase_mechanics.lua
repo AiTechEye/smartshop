@@ -53,7 +53,7 @@ function api.try_purchase(player, shop, i)
 	for _, def in ipairs(api.registered_purchase_mechanics) do
 		if def.allow_purchase(player, shop, i) then
 			def.do_purchase(player, shop, i)
-			shop:log_purchase(player, i, def.name)
+			shop:log_purchase(player, i, def.description)
 			api.on_purchase(player, shop, i)
 			return true
 		end

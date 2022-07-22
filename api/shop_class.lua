@@ -40,6 +40,7 @@ function shop_class:initialize_metadata(player)
     self:set_infotext(S("Shop by: @1", player_name))
     self:set_unlimited(is_admin)
     self:set_strict_meta(false)
+    self:set_freebies(false)
 end
 
 function shop_class:initialize_inventory()
@@ -162,6 +163,15 @@ function shop_class:is_strict_meta()
     return self.meta:get_int("strict_meta") == 1
 end
 
+function shop_class:set_freebies(value)
+    self.meta:set_int("freebies", value and 1 or 0)
+    self.meta:mark_as_private("freebies")
+end
+
+function shop_class:allow_freebies()
+    return self.meta:get_int("freebies") == 1
+end
+
 function shop_class:get_purchase_history()
     local history = self.meta:get("purchase_history")
     if history then
@@ -209,7 +219,7 @@ function shop_class:log_purchase(player, i, mechanic)
         most_recent.player_name == player_name and
         most_recent.give_item == give_item and
         most_recent.pay_item == pay_item and
-        most_recent.timestamp + 60 <= now
+        most_recent.timestamp + 60 >= now
     ) then
         most_recent.give_count = most_recent.give_count + give_count
         most_recent.pay_count = most_recent.pay_count + pay_count
@@ -315,8 +325,15 @@ function shop_class:get_all_counts(kind)
 end
 
 function shop_class:give_is_valid(i)
-    local stack = self:get_give_stack(i)
-    return stack:is_known() and not stack:is_empty()
+    local give_stack = self:get_give_stack(i)
+    if give_stack:is_known() and not give_stack:is_empty() then
+        return true
+    end
+    if self:allow_freebies() then
+        local pay_stack = self:get_pay_stack(i)
+        return pay_stack:is_known() and not pay_stack:is_empty()
+    end
+    return false
 end
 
 function shop_class:can_give_count(i)
@@ -325,8 +342,15 @@ function shop_class:can_give_count(i)
 end
 
 function shop_class:pay_is_valid(i)
-    local stack = self:get_pay_stack(i)
-    return stack:is_known() and not stack:is_empty()
+    local pay_stack = self:get_pay_stack(i)
+    if pay_stack:is_known() and not pay_stack:is_empty() then
+        return true
+    end
+    if self:allow_freebies() then
+        local give_stack = self:get_give_stack(i)
+        return give_stack:is_known() and not give_stack:is_empty()
+    end
+    return false
 end
 
 function shop_class:has_pay(i, ignore_storage)
@@ -482,6 +506,18 @@ function shop_class:show_formspec(player, force_client_view)
     show_formspec(player_name, formname, formspec)
 end
 
+function shop_class:show_history(player)
+    if not self:is_owner(player) then
+        return
+    end
+
+    local formspec = api.build_history_formspec(self)
+    local formname = ("smartshop:%s"):format(self:get_pos_as_string())
+    local player_name = player:get_player_name()
+
+    show_formspec(player_name, formname, formspec)
+end
+
 local function get_buy_index(pressed)
     for i = 1, 4 do
         if pressed["buy" .. i .. "a"] or pressed["buy" .. i .. "b"] then
@@ -494,7 +530,10 @@ function shop_class:receive_fields(player, fields)
     local buy_index = get_buy_index(fields)
     local changed = false
 
-    if fields.tsend then
+    if fields.history then
+        self:show_history(player)
+
+    elseif fields.tsend then
         api.start_storage_linking(player, self, "send")
 
     elseif fields.trefill then
@@ -518,6 +557,10 @@ function shop_class:receive_fields(player, fields)
         end
         if fields.private then
             self:set_private(fields.private == "true")
+            changed = true
+        end
+        if fields.freebies then
+            self:set_freebies(fields.freebies == "true")
             changed = true
         end
     end
