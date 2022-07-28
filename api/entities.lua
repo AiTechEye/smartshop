@@ -97,6 +97,18 @@ local function get_image_cube(tiles)
 	return "unknown_node.png"
 end
 
+local function is_normal_node(def)
+	return (def.type == "node" and (
+		def.drawtype == "normal" or
+		def.drawtype == "allfaces" or
+		def.drawtype == "allfaces_optional" or
+		def.drawtype == "glasslike" or
+		def.drawtype == "glasslike_framed" or
+		def.drawtype == "glasslike_framed_optional" or
+		def.drawtype == "liquid"
+	))
+end
+
 function api.get_image(item)
 	if not item or item == "" then
 		return "blank.png"
@@ -128,16 +140,7 @@ function api.get_image(item)
 			image = tiles
 
 		elseif type(tiles) == "table" then
-			if ((not def.type or def.type == "node") and
-				(not def.drawtype or
-					def.drawtype == "normal" or
-					def.drawtype == "allfaces" or
-					def.drawtype == "allfaces_optional" or
-					def.drawtype == "glasslike" or
-					def.drawtype == "glasslike_framed" or
-					def.drawtype == "glasslike_framed_optional" or
-					def.drawtype == "liquid")
-			) then
+			if is_normal_node(def) then
 				image = get_image_cube(tiles)
 			else
 				image = get_image_from_tile(tiles[1])

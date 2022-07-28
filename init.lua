@@ -3,7 +3,7 @@ local modpath = minetest.get_modpath(modname)
 local S = minetest.get_translator(modname)
 
 smartshop = {
-	version = os.time({year = 2022, month = 6, day = 5}),
+	version = os.time({year = 2022, month = 7, day = 28}),
 	fork = "fluxionary",
 
 	modname = modname,
@@ -33,6 +33,7 @@ smartshop = {
 		default = minetest.get_modpath("default"),
 		mesecons = minetest.get_modpath("mesecons"),
 		mesecons_mvps = minetest.get_modpath("mesecons_mvps"),
+		pipeworks = minetest.get_modpath("pipeworks"),
 		tubelib = minetest.get_modpath("tubelib"),
 	},
 

@@ -1,7 +1,5 @@
 -- luacheck: globals tubelib
 
-local table_copy = table.copy
-
 local get_object = smartshop.api.get_object
 
 --------------------
@@ -50,50 +48,10 @@ local tubelib_callbacks = {
 
 --------------------
 
-local function tubelib_override(itemstring)
-    local def = minetest.registered_nodes[itemstring]
-	local groups = table_copy(def.groups or {})
-	groups.tubedevice = 1
-	groups.tubedevice_receiver = 1
-
-	minetest.override_item(itemstring, {
-		groups = groups,
-		tube = {
-			insert_object = function(pos, node, stack, direction)
-				local obj = get_object(pos)
-				local inv = obj.inv
-				local remainder = inv:add_item("main", stack)
-
-			    obj:update_appearance()
-
-			    return remainder
-			end,
-			can_insert = function(pos, node, stack, direction)
-				local obj = get_object(pos)
-				local inv = obj.inv
-				return inv:room_for_item("main", stack)
-			end,
-			input_inventory = "main",
-			connect_sides = {
-				left = 1,
-				right = 1,
-				front = 1,
-				back = 1,
-				top = 1,
-				bottom = 1}
-		},
-	})
-
-end
-
---------------------
-
 for _, variant in ipairs(smartshop.nodes.shop_node_names) do
-	tubelib_override(variant)
 	tubelib.register_node(variant, {}, tubelib_callbacks)
 end
 
 for _, variant in ipairs(smartshop.nodes.storage_node_names) do
-	tubelib_override(variant)
 	tubelib.register_node(variant, {}, tubelib_callbacks)
 end

@@ -1,10 +1,15 @@
 -- luacheck: globals pipeworks
+local get_object = smartshop.api.get_object
 
 local function pipeworks_override(itemstring)
     local def = minetest.registered_nodes[itemstring]
     local after_place_node = def.after_place_node
     local after_dig_node = def.after_dig_node
+	local groups = table.copy(def.groups)
+	groups.tubedevice = 1
+	groups.tubedevice_receiver = 1
     minetest.override_item(itemstring, {
+	    groups = groups,
         after_place_node = function(pos, placer, itemstack)
             if after_place_node then
                 after_place_node(pos, placer, itemstack)
@@ -17,6 +22,35 @@ local function pipeworks_override(itemstring)
             end
             pipeworks.after_dig(pos, oldnode, oldmetadata, digger)
         end,
+		tube = {
+			can_insert = function(pos, node, stack, direction)
+				local obj = get_object(pos)
+				local inv = obj.inv
+				minetest.chat_send_all(("room_for_item = %s"):format(inv:room_for_item("main", stack)))
+				minetest.chat_send_all(("stack:get_wear() = %s"):format(stack:get_wear()))
+				minetest.chat_send_all(("stack:is_known() = %s"):format(stack:is_known()))
+				return inv:room_for_item("main", stack) and stack:get_wear() == 0 and stack:is_known()
+			end,
+			insert_object = function(pos, node, stack, direction)
+				local obj = get_object(pos)
+				local inv = obj.inv
+				local remainder = inv:add_item("main", stack)
+
+			    obj:update_appearance()
+
+			    return remainder
+			end,
+			input_inventory = "main",
+			connect_sides = {
+				left = 1,
+				right = 1,
+				front = 1,
+				back = 1,
+				top = 1,
+				bottom = 1
+            },
+		},
+        on_rotate = pipeworks.on_rotate,
     })
 end
 
