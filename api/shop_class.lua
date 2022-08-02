@@ -658,7 +658,7 @@ function shop_class:compute_variant()
             if self:can_give(i) then
                 n_have_give = n_have_give + 1
             end
-            if self:has_pay(i, true) then
+            if self:has_pay(i, true) and not self:get_pay_stack(i):is_empty() then
                 n_have_pay = n_have_pay + 1
             end
             if self:can_exchange(i) then
