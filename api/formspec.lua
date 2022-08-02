@@ -253,7 +253,9 @@ function api.build_history_formspec(shop)
 	local history = shop:get_purchase_history()
 	local fs_parts = {
 		"size[11,11]",
-		"textlist[0,0;10.8,10.8;history;"
+		"button[5,10;1,1;close_history;X]",
+		("tooltip[close_history;%s]"):format(FS("close history")),
+		"textlist[0,0;10.8,9.8;history;",
 	}
 
 	local tl_parts = {}
@@ -266,12 +268,11 @@ function api.build_history_formspec(shop)
 			break
 		end
 
-		table.insert(tl_parts, FS("@1 @2 bought @3 for @4 via @5",
+		table.insert(tl_parts, FS("@1 @2 bought @3 for @4",
 			format_timestamp(entry.timestamp),
 			entry.player_name,
 			format_item(entry.give_item, entry.give_count),
-			format_item(entry.pay_item, entry.pay_count),
-			entry.method
+			format_item(entry.pay_item, entry.pay_count)
 		))
 
 		i = i - 1

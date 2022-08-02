@@ -533,6 +533,9 @@ function shop_class:receive_fields(player, fields)
     if fields.history then
         self:show_history(player)
 
+    elseif fields.close_history then
+        self:show_formspec(player)
+
     elseif fields.tsend then
         api.start_storage_linking(player, self, "send")
 
