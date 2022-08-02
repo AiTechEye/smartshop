@@ -139,3 +139,11 @@ callback = function(player, shop, i)
     -- called when the shop sells out of something
 end
 ```
+* `smartshop.api.register_transaction_transform(callback)`
+```lua
+callback = function(player, shop, i, shop_removed, player_removed)
+    -- sometimes, it is necessary to alter the items in an exchange
+    -- e.g. changing the owner of a petz "pet"
+    return shop_removed, player_removed
+end
+```

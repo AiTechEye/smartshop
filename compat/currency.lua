@@ -341,6 +341,8 @@ api.register_purchase_mechanic({
 			shop_removed = shop:remove_item(give_stack, "give")
 		end
 
+		shop_removed, player_removed = api.do_transaction_transforms(shop_removed, player_removed)
+
 		if is_currency(pay_stack) then
 			shop_remaining = currency.add_item(shop, player_removed, "pay")
 		else

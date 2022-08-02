@@ -33,6 +33,7 @@ smartshop = {
 		default = minetest.get_modpath("default"),
 		mesecons = minetest.get_modpath("mesecons"),
 		mesecons_mvps = minetest.get_modpath("mesecons_mvps"),
+		petz = minetest.get_modpath("petz"),
 		pipeworks = minetest.get_modpath("pipeworks"),
 		tubelib = minetest.get_modpath("tubelib"),
 	},

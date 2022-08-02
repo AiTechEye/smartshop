@@ -14,6 +14,10 @@ if smartshop.has.mesecons_mvps then
 	smartshop.dofile("compat", "mesecons_mvps")
 end
 
+if smartshop.has.petz then
+	smartshop.dofile("compat", "petz")
+end
+
 if smartshop.has.pipeworks then
 	smartshop.dofile("compat", "pipeworks")
 end

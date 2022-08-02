@@ -10,6 +10,7 @@ api.registered_purchase_mechanics = {}
 api.registered_on_purchases = {}
 api.registered_on_shop_fulls = {}
 api.registered_on_shop_emptys = {}
+api.registered_transaction_transforms = {}
 
 --[[
 	TODO: mechanic definition isn't set in stone currently, see below
@@ -47,6 +48,17 @@ function api.on_shop_empty(player, shop, i)
 	for _, callback in ipairs(api.registered_on_shop_emptys) do
 		callback(player, shop, i)
 	end
+end
+
+function api.register_transaction_transform(callback)
+	table.insert(api.registered_transaction_transforms, callback)
+end
+
+function api.do_transaction_transforms(player, shop, i, shop_removed, player_removed)
+	for _, callback in ipairs(api.registered_transaction_transforms) do
+		shop_removed, player_removed = callback(player, shop, i, shop_removed, player_removed)
+	end
+	return shop_removed, player_removed
 end
 
 function api.try_purchase(player, shop, i)
@@ -126,6 +138,9 @@ api.register_purchase_mechanic({
 
 		local shop_removed = shop:remove_item(give_stack, "give")
 		local player_removed = player_inv:remove_item(pay_stack)
+
+		shop_removed, player_removed = api.do_transaction_transforms(player, shop, i, shop_removed, player_removed)
+
 		local player_remaining = player_inv:add_item(shop_removed)
 		local shop_remaining = shop:add_item(player_removed, "pay")
 
