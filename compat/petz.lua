@@ -1,6 +1,6 @@
 -- petz has its own mechanism for "selling" petz; this allows transferring ownership of animals put in shops
 
-local function set_owner(petstack, new_owner_name)
+local function transfer_ownership(petstack, new_owner_name)
 	local meta = petstack:get_meta()
 	local serialized_data = meta:get("staticdata")
 	if not serialized_data then
@@ -12,6 +12,10 @@ local function set_owner(petstack, new_owner_name)
 	if not (data and data.memory) then
 		return
 	end
+
+	data.memory.exchange_item_amount = nil
+	data.memory.exchange_item_index = nil
+	data.memory.for_sale = nil
 
 	if (data.memory.owner or "") ~= "" then
 		data.memory.owner = new_owner_name
@@ -26,10 +30,10 @@ end
 
 smartshop.api.register_transaction_transform(function(player, shop, i, shop_removed, player_removed)
 	if is_petz(shop_removed) then
-		set_owner(shop_removed, player:get_player_name())
+		transfer_ownership(shop_removed, player:get_player_name())
 	end
 	if is_petz(player_removed) then
-		set_owner(player_removed, shop:get_owner())
+		transfer_ownership(player_removed, shop:get_owner())
 	end
 	return shop_removed, player_removed
 end)
