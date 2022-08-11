@@ -1,3 +1,5 @@
+local util = smartshop.util
+
 smartshop.entities = {
 	element_dir = {
 	    vector.new(0, 0, -1),
@@ -6,6 +8,18 @@ smartshop.entities = {
 	    vector.new(1, 0, 0),
 	},
 	entity_offset = vector.new(0.01, 6.5/16, 0.01),
+	on_step = function(self, dtime)
+		local elapsed = self.elapsed + dtime
+		if elapsed < 3.14159 then
+			self.elapsed = elapsed
+			return
+		end
+		self.elapsed = 0
+
+		if not util.is_near_player(self.pos) then
+			self.object:remove()
+		end
+	end,
 }
 
 smartshop.dofile("entities", "quad_upright_sprite")

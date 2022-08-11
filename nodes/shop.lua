@@ -12,6 +12,7 @@ local smartshop_def = {
 	groups = {
 		choppy = 2,
         oddly_breakable_by_hand = 1,
+		smartshop = 1,
 	},
 	drawtype = "nodebox",
 	node_box = {

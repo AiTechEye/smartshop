@@ -13,6 +13,7 @@ local storage_def = {
 	groups = {
 		choppy = 2,
 		oddly_breakable_by_hand = 1,
+		smartshop_storage = 1,
 	},
 	paramtype = "light",
 	sunlight_propagates = true,

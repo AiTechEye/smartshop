@@ -2,8 +2,7 @@ local create_detached_inventory = minetest.create_detached_inventory
 
 local error_behavior = smartshop.settings.error_behavior
 
-smartshop.util = {}
-local util = smartshop.util
+local util = {}
 
 function util.error(messagefmt, ...)
 	local message = messagefmt:format(...)
@@ -434,3 +433,27 @@ function util.get_short_description(itemstack)
 	local single_line = table.concat(unparse(single_line_parsed), "")
 	return single_line
 end
+
+local max_dist_xz = smartshop.settings.entity_reaction_distance_xz
+local max_dist_y = smartshop.settings.entity_reaction_distance_y
+
+function util.is_near_player(pos)
+	local x = pos.x
+	local y = pos.y
+	local z = pos.z
+	local players = minetest.get_connected_players()
+	for i = 1, #players do
+		local ppos = players[i]:get_pos()
+		if (
+			ppos and
+			(math.abs(ppos.x - x) < max_dist_xz) and
+			(math.abs(ppos.y - y) < max_dist_y) and
+			(math.abs(ppos.z - z) < max_dist_xz)
+		) then
+			return true
+		end
+	end
+	return false
+end
+
+smartshop.util = util

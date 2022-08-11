@@ -34,6 +34,7 @@ minetest.register_entity("smartshop:single_sprite", {
 	textures = {"air"},
 	smartshop2 = true,
 	static_save = false,
+	on_step = smartshop.entities.on_step,
 })
 
 function smartshop.entities.add_single_sprite(shop, index)

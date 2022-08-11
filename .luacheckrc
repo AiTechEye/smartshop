@@ -27,5 +27,6 @@ stds.smartshop = {
 	},
 	read_globals = {
 		"minetest",
+		"node_entity_queue",
 	},
 }
