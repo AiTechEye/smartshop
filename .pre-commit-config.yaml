@@ -16,4 +16,4 @@ repos:
         language: system
         entry: luacheck
         types: [lua]
-        args: [.]
+        args: [-q]
