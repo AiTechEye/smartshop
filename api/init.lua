@@ -18,23 +18,13 @@ smartshop.dofile("api", "entities")
 function smartshop.api.is_shop(pos)
 	if not pos then return end
 	local node_name = minetest.get_node(pos).name
-	for _, name in ipairs(smartshop.nodes.shop_node_names) do
-		if name == node_name then
-			return true
-		end
-	end
-	return false
+	return minetest.get_item_group(node_name, "smartshop") > 0
 end
 
 function smartshop.api.is_storage(pos)
 	if not pos then return end
 	local node_name = minetest.get_node(pos).name
-	for _, name in ipairs(smartshop.nodes.storage_node_names) do
-		if name == node_name then
-			return true
-		end
-	end
-	return false
+	return minetest.get_item_group(node_name, "smartshop_storage") > 0
 end
 
 --[[
@@ -43,11 +33,11 @@ end
 ]]
 function smartshop.api.get_object(pos)
 	if not pos then return end
-	local obj
+
 	if smartshop.api.is_shop(pos) then
-		obj = smartshop.shop_class:new(pos)
+		return smartshop.shop_class:new(pos)
+
 	elseif smartshop.api.is_storage(pos) then
-		obj = smartshop.storage_class:new(pos)
+		return smartshop.storage_class:new(pos)
 	end
-	return obj
 end

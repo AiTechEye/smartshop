@@ -16,6 +16,11 @@ local api = smartshop.api
 
 local history_max = smartshop.settings.history_max
 
+local queue
+if smartshop.has.node_entity_queue then
+	queue = node_entity_queue.queue
+end
+
 --------------------
 
 local node_class = smartshop.node_class
@@ -270,6 +275,7 @@ end
 function shop_class:link_storage(storage, storage_type)
     if storage_type == "send" then
         self:set_send_pos(storage.pos)
+
     elseif storage_type == "refill" then
         self:set_refill_pos(storage.pos)
     end
@@ -326,13 +332,15 @@ end
 
 function shop_class:give_is_valid(i)
     local give_stack = self:get_give_stack(i)
+
     if give_stack:is_known() and not give_stack:is_empty() then
         return true
-    end
-    if self:allow_freebies() then
+
+    elseif self:allow_freebies() then
         local pay_stack = self:get_pay_stack(i)
         return pay_stack:is_known() and not pay_stack:is_empty()
     end
+
     return false
 end
 
@@ -343,13 +351,15 @@ end
 
 function shop_class:pay_is_valid(i)
     local pay_stack = self:get_pay_stack(i)
+
     if pay_stack:is_known() and not pay_stack:is_empty() then
         return true
-    end
-    if self:allow_freebies() then
+
+    elseif self:allow_freebies() then
         local give_stack = self:get_give_stack(i)
         return give_stack:is_known() and not give_stack:is_empty()
     end
+
     return false
 end
 
@@ -709,7 +719,14 @@ function shop_class:clear_entities()
 end
 
 function shop_class:update_entities()
-    api.update_entities(self)
+    if queue then
+        queue:push_back(function()
+            api.update_entities(self)
+        end)
+
+    else
+        api.update_entities(self)
+    end
 end
 
 --------------------

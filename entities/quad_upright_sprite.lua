@@ -5,6 +5,8 @@ local v_mul = vector.multiply
 local add_entity = minetest.add_entity
 local get_node = minetest.get_node
 local pos_to_string = minetest.pos_to_string
+local serialize = minetest.serialize
+local deserialize = minetest.deserialize
 
 local api = smartshop.api
 
@@ -26,13 +28,40 @@ minetest.register_entity("smartshop:quad_upright_sprite", {
 	physical = false,
 	textures = {"air"},
 	smartshop2 = true,
-	static_save = false,
-	on_step = smartshop.entities.on_step,
+
+	get_staticdata = function(self)
+		minetest.log("action", "get_staticdata quad")
+		return serialize({
+			self.pos, self.items,
+		})
+	end,
+
+	on_activate = function(self, staticdata, dtime_s)
+		minetest.log("action", "on_activate quad")
+		local pos, items = unpack(deserialize(staticdata))
+		local obj = self.object
+
+		if not (pos and items and api.is_shop(pos)) then
+			obj:remove()
+			return
+		end
+
+		self.pos = pos
+
+		for _, other_obj in ipairs(api.get_entities(pos)) do
+			if obj ~= other_obj then
+				obj:remove()
+				return
+			end
+		end
+
+		self.items = items
+
+		obj:set_properties({textures = {api.get_quad_image(items)}})
+	end,
 })
 
-function smartshop.entities.add_quad_upright_sprite(shop)
-	local shop_pos = shop.pos
-	local param2 = get_node(shop_pos).param2
+local function get_items(shop)
 	local items = {}
 	for index = 1, 4 do
 		if shop:can_exchange(index) then
@@ -41,28 +70,32 @@ function smartshop.entities.add_quad_upright_sprite(shop)
 			table.insert(items, "")
 		end
 	end
+	return items
+end
 
+local function get_entity_pos(shop_pos, param2)
 	local dir = element_dir[param2 + 1]
     local base_pos = v_add(shop_pos, v_mul(dir, entity_offset))
     local offset = element_offset[param2 + 1]
-	local entity_pos = v_add(base_pos, offset)
 
-	local obj = add_entity(entity_pos, "smartshop:quad_upright_sprite")
+	return v_add(base_pos, offset)
+end
+
+function smartshop.entities.add_quad_upright_sprite(shop)
+	local shop_pos = shop.pos
+	local param2 = get_node(shop_pos).param2
+	local items = get_items(shop)
+
+	local entity_pos = get_entity_pos(shop_pos, param2)
+	local staticdata = serialize({shop_pos, items})
+	local obj = add_entity(entity_pos, "smartshop:quad_upright_sprite", staticdata)
+
 	if not obj then
 		smartshop.log("warning", "could not create quad_upright_sprite @ %s", pos_to_string(shop_pos))
 		return
 	end
 
-	local texture = api.get_quad_image(items)
-	smartshop.log("info", "quad texture = %s", texture)
-
 	obj:set_yaw(math.pi * (2 - (param2 / 2)))
-	obj:set_properties({textures = {texture}})
-
-	local entity = obj:get_luaentity()
-
-	entity.pos = shop_pos
-	entity.items = items
 
 	return obj
 end

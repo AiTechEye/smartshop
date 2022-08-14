@@ -447,13 +447,22 @@ function util.is_near_player(pos)
 		if (
 			ppos and
 			(math.abs(ppos.x - x) < max_dist_xz) and
-			(math.abs(ppos.y - y) < max_dist_y) and
+			(math.abs(ppos.y + 1 - y) < max_dist_y) and
 			(math.abs(ppos.z - z) < max_dist_xz)
 		) then
 			return true
 		end
 	end
 	return false
+end
+
+function util.memoize1(f)
+	local memo = {}
+	return function(arg)
+		local rv = memo[arg] or f(arg)
+		memo[arg] = rv
+		return rv
+	end
 end
 
 smartshop.util = util

@@ -26,9 +26,6 @@ local function pipeworks_override(itemstring)
 			can_insert = function(pos, node, stack, direction)
 				local obj = get_object(pos)
 				local inv = obj.inv
-				minetest.chat_send_all(("room_for_item = %s"):format(inv:room_for_item("main", stack)))
-				minetest.chat_send_all(("stack:get_wear() = %s"):format(stack:get_wear()))
-				minetest.chat_send_all(("stack:is_known() = %s"):format(stack:is_known()))
 				return inv:room_for_item("main", stack) and stack:get_wear() == 0 and stack:is_known()
 			end,
 			insert_object = function(pos, node, stack, direction)

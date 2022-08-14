@@ -1,4 +1,4 @@
-local util = smartshop.util
+local api = smartshop.api
 
 smartshop.entities = {
 	element_dir = {
@@ -8,18 +8,6 @@ smartshop.entities = {
 	    vector.new(1, 0, 0),
 	},
 	entity_offset = vector.new(0.01, 6.5/16, 0.01),
-	on_step = function(self, dtime)
-		local elapsed = self.elapsed + dtime
-		if elapsed < 3.14159 then
-			self.elapsed = elapsed
-			return
-		end
-		self.elapsed = 0
-
-		if not util.is_near_player(self.pos) then
-			self.object:remove()
-		end
-	end,
 }
 
 smartshop.dofile("entities", "quad_upright_sprite")
@@ -28,18 +16,42 @@ smartshop.dofile("entities", "single_upright_sprite")
 smartshop.dofile("entities", "single_wielditem")
 smartshop.dofile("entities", "remove_legacy_entities")
 
+local entities = smartshop.entities
+
+function entities.add_entity(shop, type, index)
+	if type == "single_upright_sprite" then
+		entities.add_single_upright_sprite(shop, index)
+
+	elseif type == "quad_upright_sprite" then
+		entities.add_quad_upright_sprite(shop)
+
+	elseif type == "single_sprite" then
+		entities.add_single_sprite(shop, index)
+
+	elseif type == "single_wielditem" then
+		entities.add_single_wielditem(shop, index)
+	end
+end
+
+local queue
+if smartshop.has.node_entity_queue then
+	queue = node_entity_queue.queue
+end
+
 minetest.register_lbm({
 	name = "smartshop:load_shop",
-	nodenames = {
-        "smartshop:shop",
-        "smartshop:shop_full",
-        "smartshop:shop_empty",
-        "smartshop:shop_used",
-        "smartshop:shop_admin"
-    },
+	nodenames = "group:smartshop",
     run_at_every_load = true,
-	action = function(pos, node)
-		local shop = smartshop.api.get_object(pos)
-		shop:update_appearance()
+	action = function(pos)
+		if queue then
+			queue:push_back(function()
+				local shop = api.get_object(pos)
+				api.update_entities(shop)
+			end)
+
+		else
+			local shop = api.get_object(pos)
+			api.update_entities(shop)
+		end
 	end,
 })

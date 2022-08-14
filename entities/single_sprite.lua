@@ -5,6 +5,8 @@ local v_mul = vector.multiply
 local add_entity = minetest.add_entity
 local get_node = minetest.get_node
 local pos_to_string = minetest.pos_to_string
+local serialize = minetest.serialize
+local deserialize = minetest.deserialize
 
 local api = smartshop.api
 
@@ -33,34 +35,64 @@ minetest.register_entity("smartshop:single_sprite", {
 	physical = false,
 	textures = {"air"},
 	smartshop2 = true,
-	static_save = false,
-	on_step = smartshop.entities.on_step,
+
+	get_staticdata = function(self)
+		minetest.log("action", "get_staticdata sprite")
+		return serialize({
+			self.pos, self.index, self.item,
+		})
+	end,
+
+	on_activate = function(self, staticdata, dtime_s)
+		minetest.log("action", "on_activate sprite")
+		local pos, index, item = unpack(deserialize(staticdata))
+		local obj = self.object
+
+		if not (pos and index and item and api.is_shop(pos)) then
+			obj:remove()
+			return
+		end
+
+		self.pos = pos
+		self.index = index
+
+		for _, other_obj in ipairs(api.get_entities(pos)) do
+			local entity = other_obj:get_luaentity()
+			if (not entity.index) or (entity.index == index and obj ~= other_obj) then
+				obj:remove()
+				return
+			end
+		end
+
+		self.item = item
+
+		obj:set_properties({textures = {api.get_image(item)}})
+	end,
 })
+
+local function get_entity_pos(shop_pos, param2, index)
+	local dir = element_dir[param2 + 1]
+    local base_pos = v_add(shop_pos, v_mul(dir, entity_offset))
+    local offset = element_offset[param2 + 1][index]
+
+	return v_add(base_pos, offset)
+end
 
 function smartshop.entities.add_single_sprite(shop, index)
 	local shop_pos = shop.pos
 	local param2 = get_node(shop_pos).param2
-	local item_name = shop:get_give_stack(index):get_name()
+	local item = shop:get_give_stack(index):get_name()
 
-	local dir = element_dir[param2 + 1]
-    local base_pos = v_add(shop_pos, v_mul(dir, entity_offset))
-    local offset = element_offset[param2 + 1][index]
-	local entity_pos = v_add(base_pos, offset)
+	local entity_pos = get_entity_pos(shop_pos, param2, index)
+	local staticdata = serialize({shop_pos, index, item})
+	local obj = add_entity(entity_pos, "smartshop:single_sprite", staticdata)
 
-	local obj = add_entity(entity_pos, "smartshop:single_sprite")
 	if not obj then
-		smartshop.log("warning", "could not create single_sprite for %s @ %s", item_name, pos_to_string(shop_pos))
+		smartshop.log("warning", "could not create single_sprite for %s @ %s", item, pos_to_string(shop_pos))
 		return
 	end
 
 	obj:set_yaw(math.pi * (2 - (param2 / 2)))
-	obj:set_properties({textures = {api.get_image(item_name)}})
-
-	local entity = obj:get_luaentity()
-
-	entity.pos = shop_pos
-	entity.index = index
-	entity.item = item_name
 
 	return obj
 end

@@ -8,3 +8,12 @@ repos:
 
       - id: mixed-line-ending
         args: [ --fix=lf ]
+
+  - repo: local
+    hooks:
+      - id: luacheck
+        name: luacheck
+        language: system
+        entry: luacheck
+        types: [lua]
+        args: [.]

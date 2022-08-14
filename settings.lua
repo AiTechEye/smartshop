@@ -4,8 +4,8 @@ smartshop.settings = {
 	history_max = tonumber(settings:get("smartshop.history_max")) or 60,
     storage_max_distance = tonumber(settings:get("smartshop.storage_max_distance")) or 30,
 	storage_link_time = tonumber(settings:get("smartshop.storage_link_time")) or 30,
-    entity_reaction_distance_xz = tonumber(settings:get("smartshop.entity_reaction_distance_xz")) or 12,
-    entity_reaction_distance_y = tonumber(settings:get("smartshop.entity_reaction_distance_y")) or 4,
+    entity_reaction_distance_xz = tonumber(settings:get("smartshop.entity_reaction_distance_xz")) or 8,
+    entity_reaction_distance_y = tonumber(settings:get("smartshop.entity_reaction_distance_y")) or 3,
 
     change_currency = settings:get_bool("smartshop.change_currency", true),
 	enable_refund = settings:get_bool("smartshop.enable_refund", true),
