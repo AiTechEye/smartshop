@@ -114,30 +114,30 @@ end)
 local function get_image_cube(tiles)
 	if #tiles == 6 then
 		return minetest.inventorycube(
-			get_image_from_tile(tiles[1]),
-			get_image_from_tile(tiles[6]),
-			get_image_from_tile(tiles[3])
+			get_image_from_tile(tiles[1] or ""),
+			get_image_from_tile(tiles[6] or ""),
+			get_image_from_tile(tiles[3] or "")
 		)
 
 	elseif #tiles == 4 then
 		return minetest.inventorycube(
-			get_image_from_tile(tiles[1]),
-			get_image_from_tile(tiles[4]),
-			get_image_from_tile(tiles[3])
+			get_image_from_tile(tiles[1] or ""),
+			get_image_from_tile(tiles[4] or ""),
+			get_image_from_tile(tiles[3] or "")
 		)
 
 	elseif #tiles == 3 then
 		return minetest.inventorycube(
-			get_image_from_tile(tiles[1]),
-			get_image_from_tile(tiles[3]),
-			get_image_from_tile(tiles[3])
+			get_image_from_tile(tiles[1] or ""),
+			get_image_from_tile(tiles[3] or ""),
+			get_image_from_tile(tiles[3] or "")
 		)
 
 	elseif #tiles >= 1 then
 		return minetest.inventorycube(
-			get_image_from_tile(tiles[1]),
-			get_image_from_tile(tiles[1]),
-			get_image_from_tile(tiles[1])
+			get_image_from_tile(tiles[1] or ""),
+			get_image_from_tile(tiles[1] or ""),
+			get_image_from_tile(tiles[1] or "")
 		)
 	end
 
