@@ -1,5 +1,3 @@
-local create_detached_inventory = minetest.create_detached_inventory
-
 local error_behavior = smartshop.settings.error_behavior
 
 local util = {}
@@ -195,39 +193,25 @@ function util.get_stack_key(stack, match_meta)
 	end
 end
 
-function util.clone_tmp_inventory(inv_name, src_inv)
-	local tmp_inv = create_detached_inventory(inv_name, {})
-
-	for name, _ in pairs(src_inv:get_lists()) do
-		if not tmp_inv:is_empty(name) or tmp_inv:get_size(name) ~= 0 then
-			util.error("attempt to re-use existing temporary inventory %s", inv_name)
-			return
-		end
-	end
-
-	for name, list in pairs(src_inv:get_lists()) do
-		tmp_inv:set_size(name, src_inv:get_size(name))
-		tmp_inv:set_list(name, list)
-	end
-
-	return tmp_inv
-end
-
 function util.class(super)
     local class = {}
 	class.__index = class
 
+	local meta = {
+		__call = function(_, ...)
+	        local obj = setmetatable({}, class)
+	        if obj._init then
+	            obj:_init(...)
+	        end
+	        return obj
+	    end
+	}
+
 	if super then
-		setmetatable(class, {__index = super})
+		meta.__index = super
 	end
 
-    function class:new(...)
-        local obj = setmetatable({}, class)
-        if obj.__new then
-            obj:__new(...)
-        end
-        return obj
-    end
+	setmetatable(class, meta)
 
     return class
 end

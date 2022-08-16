@@ -10,14 +10,14 @@ smartshop.player_inv_class = player_inv_class
 
 --------------------
 
-function player_inv_class:__new(player)
+function player_inv_class:_init(player)
 	self.player = player
 	self.name = player:get_player_name()
-	inv_class.__new(self, player:get_inventory())
+	inv_class._init(self, player:get_inventory())
 end
 
 function smartshop.api.get_player_inv(player)
-	return player_inv_class:new(player)
+	return player_inv_class(player)
 end
 
 --------------------

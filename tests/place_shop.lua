@@ -1,5 +1,5 @@
 
-table.insert(smartshop.tests.tests, {
+smartshop.tests.register_test({
     name = "place a shop",
     func = function(player, state)
         local under = state.place_shop_against

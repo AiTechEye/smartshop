@@ -39,7 +39,7 @@ local function get_center(pos)
     )
 end
 
-table.insert(smartshop.tests.tests, {
+smartshop.tests.register_test({
     name = "initialize test region",
     func = function(player, state)
         local ppos = player:get_pos()

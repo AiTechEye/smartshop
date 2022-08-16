@@ -1,5 +1,5 @@
 
-table.insert(smartshop.tests.tests, {
+smartshop.tests.register_test({
     name = "dig shop",
     func = function(player, state)
         assert(minetest.node_dig(state.shop_at, minetest.get_node(state.shop_at), player), "node_dig")

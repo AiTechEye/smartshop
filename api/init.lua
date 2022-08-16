@@ -35,9 +35,9 @@ function smartshop.api.get_object(pos)
 	if not pos then return end
 
 	if smartshop.api.is_shop(pos) then
-		return smartshop.shop_class:new(pos)
+		return smartshop.shop_class(pos)
 
 	elseif smartshop.api.is_storage(pos) then
-		return smartshop.storage_class:new(pos)
+		return smartshop.storage_class(pos)
 	end
 end

@@ -1,6 +1,6 @@
 local inv_count = smartshop.tests.inv_count
 
-table.insert(smartshop.tests.tests, {
+smartshop.tests.register_test({
     name = "simulate a purchase",
     func = function(player, state)
         local shop_at = state.shop_at

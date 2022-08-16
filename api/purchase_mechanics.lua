@@ -58,6 +58,7 @@ function api.do_transaction_transforms(player, shop, i, shop_removed, player_rem
 	for _, callback in ipairs(api.registered_transaction_transforms) do
 		shop_removed, player_removed = callback(player, shop, i, shop_removed, player_removed)
 	end
+
 	return shop_removed, player_removed
 end
 
@@ -76,6 +77,7 @@ function api.try_purchase(player, shop, i)
 
 	if reason == "Shop is sold out" then
 		api.on_shop_empty(player, shop, i)
+
 	elseif reason == "Shop is full" then
 		api.on_shop_full(player, shop, i)
 	end

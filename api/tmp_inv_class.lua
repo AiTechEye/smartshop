@@ -1,8 +1,5 @@
-
-local remove_detached_inventory = minetest.remove_detached_inventory
-
 local class = smartshop.util.class
-local clone_tmp_inventory = smartshop.util.clone_tmp_inventory
+local clone_fake_inventory = smartshop.util.clone_fake_inventory
 
 --------------------
 
@@ -12,12 +9,10 @@ smartshop.tmp_inv_class = tmp_inv_class
 
 --------------------
 
-function tmp_inv_class:__new(inv)
-	self.name = "smartshop:tmp_" .. minetest.serialize(inv:get_location())
-	inv_class.__new(self, clone_tmp_inventory(self.name, inv))
+function tmp_inv_class:_init(inv)
+	inv_class._init(self, clone_fake_inventory(inv))
 end
 
 function tmp_inv_class:destroy()
-	remove_detached_inventory(self.name)
 	self.inv = nil
 end

@@ -17,13 +17,16 @@ smartshop.node_class = node_class
 
 --------------------
 
-function node_class:__new(pos)
+function node_class:_init(pos)
+	if not (pos.x and pos.y and pos.z) then
+		error(dump(pos))
+	end
 	self.pos = pos
 	self.meta = get_meta(pos)
 	if not self.meta then
 		smartshop.util.error("could not get node metadata @ %s", minetest.pos_to_string(pos))
 	end
-	inv_class.__new(self, self.meta:get_inventory())
+	inv_class._init(self, self.meta:get_inventory())
 end
 
 function node_class:get_pos_as_string()

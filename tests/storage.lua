@@ -1,6 +1,6 @@
 local inv_count = smartshop.tests.inv_count
 
-table.insert(smartshop.tests, {
+smartshop.tests.register_test({
     name = "connect and use separate storage",
     func = function(player, state)
         local under = state.place_shop_against

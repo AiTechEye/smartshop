@@ -1,7 +1,7 @@
 local inv_count = smartshop.tests.inv_count
 local put_in_shop = smartshop.tests.put_in_shop
 
-table.insert(smartshop.tests.tests, {
+smartshop.tests.register_test({
     name = "item with metadata in a normal shop can be purchased",
     func = function(player, state)
         local under = state.place_shop_against
@@ -42,7 +42,7 @@ table.insert(smartshop.tests.tests, {
     end,
 })
 
-table.insert(smartshop.tests.tests, {
+smartshop.tests.register_test({
     name = "shop is strict, only contains meta mismatch",
     func = function(player, state)
         local under = state.place_shop_against
@@ -80,7 +80,7 @@ table.insert(smartshop.tests.tests, {
     end,
 })
 
-table.insert(smartshop.tests.tests, {
+smartshop.tests.register_test({
     name = "shop is strict, contains meta match and mismatch",
     func = function(player, state)
         local under = state.place_shop_against

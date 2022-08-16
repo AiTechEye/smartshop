@@ -1,7 +1,7 @@
 local inv_count = smartshop.tests.inv_count
 local put_in_shop = smartshop.tests.put_in_shop
 
-table.insert(smartshop.tests.tests, {
+smartshop.tests.register_test({
     name = "shop is full, but can place payment (item)",
     func = function(player, state)
         local under = state.place_shop_against
@@ -37,7 +37,7 @@ table.insert(smartshop.tests.tests, {
     end
 })
 
-table.insert(smartshop.tests.tests, {
+smartshop.tests.register_test({
     name = "shop is full, but can place payment (currency)",
     func = function(player, state)
         local under = state.place_shop_against
@@ -73,7 +73,7 @@ table.insert(smartshop.tests.tests, {
     end
 })
 
-table.insert(smartshop.tests.tests, {
+smartshop.tests.register_test({
     name = "shop is full, exchange not possible",
     func = function(player, state)
         local under = state.place_shop_against

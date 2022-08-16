@@ -819,5 +819,5 @@ end
 --------------------
 
 function shop_class:get_tmp_inv()
-    return smartshop.tmp_shop_inv_class:new(self)
+    return smartshop.tmp_shop_inv_class(self)
 end

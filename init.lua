@@ -27,6 +27,9 @@ smartshop = {
 		end
 		minetest.chat_send_player(player_name, ("[%s] %s"):format(modname, S(message, ...)))
 	end,
+	chat_send_all = function(message, ...)
+		minetest.chat_send_all(("[%s] %s"):format(modname, S(message, ...)))
+	end,
 
 	has = {
 		currency = minetest.get_modpath("currency"),
@@ -47,6 +50,7 @@ smartshop = {
 smartshop.dofile("settings")
 smartshop.dofile("resources")
 smartshop.dofile("util")
+smartshop.dofile("fake_inventory")
 smartshop.dofile("api", "init")
 smartshop.dofile("nodes", "init")
 smartshop.dofile("entities", "init")

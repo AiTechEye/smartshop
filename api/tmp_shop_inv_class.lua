@@ -1,6 +1,3 @@
-
-local remove_detached_inventory = minetest.remove_detached_inventory
-
 local class = smartshop.util.class
 
 --------------------
@@ -11,8 +8,8 @@ smartshop.tmp_shop_inv_class = tmp_shop_inv_class
 
 --------------------
 
-function tmp_shop_inv_class:__new(shop)
-	tmp_inv_class.__new(self, shop.inv)
+function tmp_shop_inv_class:_init(shop)
+	tmp_inv_class._init(self, shop.inv)
 
 	self.is_unlimited = shop:is_unlimited()
 	self.strict_meta = shop:is_strict_meta()
@@ -23,23 +20,20 @@ function tmp_shop_inv_class:__new(shop)
 	if refill and send then
 		if vector.equals(refill.pos, send.pos) then
 			-- only make 1 detached inventory
-			self.refill = tmp_inv_class:new(refill.inv)
+			self.refill = tmp_inv_class(refill.inv)
 			self.send = self.refill
 		else
-			self.refill = tmp_inv_class:new(refill.inv)
-			self.send = tmp_inv_class:new(send.inv)
+			self.refill = tmp_inv_class(refill.inv)
+			self.send = tmp_inv_class(send.inv)
 		end
 	elseif refill then
-		self.refill = tmp_inv_class:new(refill.inv)
+		self.refill = tmp_inv_class(refill.inv)
 	elseif send then
-		self.send = tmp_inv_class:new(send.inv)
+		self.send = tmp_inv_class(send.inv)
 	end
 end
 
 function tmp_shop_inv_class:destroy()
-	remove_detached_inventory(self.name)
-	self.inv = nil
-
 	if self.refill then
 		self.refill:destroy()
 	end
@@ -50,6 +44,8 @@ function tmp_shop_inv_class:destroy()
 
 	self.send = nil
 	self.refill = nil
+
+	tmp_inv_class.destroy(self)
 end
 
 --------------------

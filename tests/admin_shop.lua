@@ -1,6 +1,6 @@
 local inv_count = smartshop.tests.inv_count
 
-table.insert(smartshop.tests.tests, {
+smartshop.tests.register_test({
     name = "configure and use an admin shop",
     func = function(player, state)
         local under = state.place_shop_against
@@ -61,7 +61,7 @@ local function init_old_admin_shop(pos, player)
     inv:set_size("pay4", 1)
 end
 
-table.insert(smartshop.tests.tests, {
+smartshop.tests.register_test({
     name = "update old admin shop",
     func = function(player, state)
         local under = state.place_shop_against

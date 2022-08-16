@@ -1,5 +1,9 @@
+local tests = {}
+
 smartshop.tests = {
-    tests = {},
+    register_test = function(def)
+        table.insert(tests, def)
+    end,
     inv_count = function(inv, listname, item_name)
         local count = 0
         for _, item in ipairs(inv:get_list(listname)) do
@@ -27,7 +31,7 @@ local function run_test(name, state, i)
     if not i then
         error(("? %s %s %s"):format(name, state, i))
     end
-    if i > #smartshop.tests.tests then
+    if i > #tests then
         return
     end
     local player = minetest.get_player_by_name(name)
@@ -35,7 +39,7 @@ local function run_test(name, state, i)
         return
     end
     local start = minetest.get_us_time()
-    local test = smartshop.tests.tests[i]
+    local test = tests[i]
     local ok, res = xpcall(test.func, debug.traceback, player, state)
     local elapsed = (minetest.get_us_time() - start) / 1e6
     if ok then
@@ -58,6 +62,8 @@ minetest.register_chatcommand("smartshop_tests", {
 })
 
 smartshop.dofile("tests", "define_items")
+
+smartshop.dofile("tests", "fake_inventory")
 
 smartshop.dofile("tests", "initialize")
 smartshop.dofile("tests", "place_shop")

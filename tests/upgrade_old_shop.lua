@@ -24,7 +24,7 @@ local function init_old_shop(pos, player)
     inv:set_size("pay4", 1)
 end
 
-table.insert(smartshop.tests.tests, {
+smartshop.tests.register_test({
     name = "simulate refunds in empty shop",
     func = function(player, state)
         local shop_at = state.shop_at
@@ -49,7 +49,7 @@ table.insert(smartshop.tests.tests, {
     end,
 })
 
-table.insert(smartshop.tests.tests, {
+smartshop.tests.register_test({
     name = "simulate refunds in full shop",
     func = function(player, state)
         local shop_at = state.shop_at

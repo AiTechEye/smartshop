@@ -10,10 +10,7 @@ smartshop.inv_class = inv_class
 
 --------------------
 
-function inv_class:__new(inv)
-	if type(inv) ~= "userdata" then
-		smartshop.util.error("new inventory unexpectedly %s", dump(inv))
-	end
+function inv_class:_init(inv)
 	self.inv = inv
 end
 
@@ -88,7 +85,7 @@ end
 --------------------
 
 function inv_class:get_tmp_inv()
-	return smartshop.tmp_inv_class:new(self.inv)
+	return smartshop.tmp_inv_class(self.inv)
 end
 
 function inv_class:destroy_tmp_inv(tmp_inv)

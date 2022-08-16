@@ -42,7 +42,7 @@ minetest.register_lbm({
 	name = "smartshop:load_shop",
 	nodenames = "group:smartshop",
     run_at_every_load = true,
-	action = function(pos)
+	action = function(pos, node)
 		if queue then
 			queue:push_back(function()
 				local shop = api.get_object(pos)
