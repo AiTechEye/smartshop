@@ -14,6 +14,7 @@ repos:
       - id: luacheck
         name: luacheck
         language: system
-        entry: ~/.luarocks/bin/luacheck
+        entry: luacheck
         types: [lua]
         args: [-q]
+        always_run: true

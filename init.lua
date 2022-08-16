@@ -3,7 +3,7 @@ local modpath = minetest.get_modpath(modname)
 local S = minetest.get_translator(modname)
 
 smartshop = {
-	version = os.time({year = 2022, month = 7, day = 28}),
+	version = os.time({year = 2022, month = 8, day = 16}),
 	fork = "fluxionary",
 
 	modname = modname,
