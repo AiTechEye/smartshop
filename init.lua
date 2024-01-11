@@ -325,14 +325,17 @@ end
 
 
 minetest.register_entity("smartshop:item",{
-	hp_max = 1,
-	visual="wielditem",
-	visual_size={x=.20,y=.20},
-	collisionbox = {0,0,0,0,0,0},
-	physical=false,
-	textures={"air"},
-	smartshop=true,
-	type="",
+	initial_properties = {
+		hp_max = 1,
+		visual="wielditem",
+		visual_size={x=.20,y=.20},
+		collisionbox = {0,0,0,0,0,0},
+		physical=false,
+		textures={"air"},
+		smartshop=true,
+		type="",
+	},
+{
 	on_activate = function(self, staticdata)
 		if smartshop.tmp.item ~= nil then
 			self.item=smartshop.tmp.item
@@ -465,6 +468,7 @@ minetest.register_node("smartshop:shop", {
 	node_box = {type="fixed",fixed={-0.5,-0.5,-0.0,0.5,0.5,0.5}},
 	paramtype2="facedir",
 	paramtype = "light",
+	use_texture_alpha = "clip",
 	sunlight_propagates = true,
 	light_source = 10,
 	on_timer = function (pos, elapsed)
